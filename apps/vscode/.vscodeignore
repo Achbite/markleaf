@@ -1,6 +1,8 @@
 **/*
 !package.json
 !README.md
+!CHANGELOG.md
+!appicon.png
 !dist/**
 !dist/webview/.vite/manifest.json
 !docs/welcome.md
