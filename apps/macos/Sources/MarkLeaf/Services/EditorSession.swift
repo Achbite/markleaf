@@ -2596,11 +2596,24 @@ final class EditorSession: NSObject, WKScriptMessageHandler, WKNavigationDelegat
     }
 
     func openRecentFile(_ path: String) {
-        openDocument(at: URL(fileURLWithPath: path))
+        let url = URL(fileURLWithPath: path)
+        if SettingsService.shared.settings.externalFileOpenMode == .currentWindow {
+            openDocumentBypassingRouter(at: url)
+        } else {
+            openDocument(at: url)
+        }
     }
 
     func openRecentFolder(_ path: String) {
         loadWorkspace(path)
+    }
+
+    /// 文件菜单中的“重命名”复用侧栏工作区条目的重命名对话框和移动规则。
+    func renameActiveDocument() {
+        guard let url = documentURL else { return }
+        renameWorkspaceEntry(
+            WorkspaceEntry(name: url.lastPathComponent, path: url.path, isDirectory: false)
+        )
     }
 
     /// 导入主题（对齐 Windows AddThemeFromFile）：选择 CSS 复制到用户主题目录，并刷新样式。

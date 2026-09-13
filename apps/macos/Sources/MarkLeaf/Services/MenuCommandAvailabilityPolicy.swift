@@ -35,7 +35,7 @@ enum MenuCommandAvailabilityPolicy {
         }
     }
 
-    private static func isPath(_ path: String, insideDirectory root: String) -> Bool {
+    static func isPath(_ path: String, insideDirectory root: String) -> Bool {
         let standardizedPath = URL(fileURLWithPath: path).standardizedFileURL.path
         let standardizedRoot = URL(fileURLWithPath: root, isDirectory: true).standardizedFileURL.path
         return standardizedPath.hasPrefix(standardizedRoot + "/")

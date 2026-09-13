@@ -80,6 +80,7 @@ final class NativeMenuBuilder {
         menu.addItem(commandItem(L10n.t("复制文件路径"), "copyActiveTabPath"))
         menu.addItem(commandItem(L10n.t("复制内容到剪贴板"), "copyActiveFileContents"))
         menu.addItem(commandItem(L10n.t("在 Finder 中显示"), "revealActiveTabInFinder"))
+        menu.addItem(commandItem(L10n.t("重命名"), "renameActiveTab"))
         menu.addItem(commandItem(L10n.t("分享"), "shareActiveTab"))
         menu.addItem(.separator())
         menu.addItem(commandItem(L10n.t("关闭文件夹"), "closeFolder"))
@@ -477,8 +478,8 @@ final class MenuRouter: NSObject, NSMenuItemValidation, NSMenuDelegate {
         case "restoreClosedTab":
             return AppWindowManager.shared.canRestoreClosedTab
         case "tabNext", "closeCurrentTab", "closeOtherTabs",
-             "revealActiveTabInWorkspace", "copyActiveTabPath", "revealActiveTabInFinder",
-             "copyActiveFileContents", "shareActiveTab":
+            "revealActiveTabInWorkspace", "copyActiveTabPath", "revealActiveTabInFinder",
+            "copyActiveFileContents", "shareActiveTab":
             guard let windowSession = AppWindowManager.shared.activeWindowSession else { return false }
             return MenuCommandAvailabilityPolicy.isTabCommandEnabled(
                 command: command,
@@ -489,6 +490,8 @@ final class MenuRouter: NSObject, NSMenuItemValidation, NSMenuDelegate {
                     hasContent: windowSession.activeTabSession?.hasContent ?? false
                 )
             )
+        case "renameActiveTab":
+            return AppWindowManager.shared.activeWindowSession?.activeTabSession?.documentURL != nil
         default:
             break
         }
@@ -499,7 +502,19 @@ final class MenuRouter: NSObject, NSMenuItemValidation, NSMenuDelegate {
         }
         switch command {
         case "print": return session != nil
-        case "save", "saveAll", "saveAs": return session != nil && session?.isReadOnly != true
+        case "save":
+            return SaveMenuPolicy.isSaveEnabled(
+                hasSession: session != nil,
+                isDirty: session?.isDirty == true,
+                isReadOnly: session?.isReadOnly == true
+            )
+        case "saveAll":
+            return SaveMenuPolicy.isSaveAllEnabled(
+                hasSavableTarget: AppWindowManager.shared.activeWindowSession.map { windowSession in
+                    SaveAllPolicy.hasTarget(tabs: windowSession.tabStore.tabs)
+                } ?? false
+            )
+        case "saveAs": return session != nil && session?.isReadOnly != true
         case "toggleSidebar":
             menuItem.state = viewStateSession?.sidebarVisible == true ? .on : .off
             return viewStateSession != nil
@@ -510,7 +525,9 @@ final class MenuRouter: NSObject, NSMenuItemValidation, NSMenuDelegate {
             menuItem.state = viewStateSession?.sidebarTabIndex == 1 ? .on : .off
             return SidebarMenuPolicy.leftSidebarContentEnabled(sidebarVisible: viewStateSession?.sidebarVisible ?? false)
                 && viewStateSession?.outlineDetached != true
-        case "toggleDetachedOutline": menuItem.state = s?.outlineDetached == true ? .on : .off
+        case "toggleDetachedOutline":
+            menuItem.state = viewStateSession?.outlineDetached == true ? .on : .off
+            return viewStateSession != nil
         case "treeView":
             menuItem.state = viewStateSession?.workspaceListMode == false ? .on : .off
             return SidebarMenuPolicy.leftSidebarContentEnabled(sidebarVisible: viewStateSession?.sidebarVisible ?? false)
@@ -522,6 +539,7 @@ final class MenuRouter: NSObject, NSMenuItemValidation, NSMenuDelegate {
             return viewStateSession != nil
         case "toggleFollowSystemTheme":
             menuItem.state = SettingsService.shared.settings.followSystemTheme ? .on : .off
+            return true
         case "toggleCodeHighlight":
             menuItem.state = SettingsService.shared.settings.showCodeHighlight ? .on : .off
         default: break
@@ -572,9 +590,7 @@ final class MenuRouter: NSObject, NSMenuItemValidation, NSMenuDelegate {
                 controller.newUntitledTab(kind: command == "newPlainText" ? .plainText : .markdown)
             }
         case "open":
-            if let session {
-                session.performMenuCommand("open")
-            } else if let controller = AppWindowManager.shared.activeWindowController {
+            if let controller = AppWindowManager.shared.activeWindowController {
                 controller.openDocumentPanel()
             }
         case "recoverUnsavedFiles":
@@ -628,6 +644,8 @@ final class MenuRouter: NSObject, NSMenuItemValidation, NSMenuDelegate {
             AppWindowManager.shared.activeWindowController?.copyActiveFileContents()
         case "shareActiveTab":
             AppWindowManager.shared.activeWindowController?.shareActiveTab()
+        case "renameActiveTab":
+            session?.renameActiveDocument()
         case "openHelp":
             if let url = URL(string: "https://github.com/zhuanshunjishi2017/markleaf/blob/main/README.md") {
                 NSWorkspace.shared.open(url)

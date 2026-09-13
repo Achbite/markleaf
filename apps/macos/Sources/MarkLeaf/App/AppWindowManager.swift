@@ -887,7 +887,7 @@ final class AppWindowManager {
                 NSApp.activate(ignoringOtherApps: true)
             },
             replaceActive: { [weak self] url in
-                self?.activeWindowController?.windowSession?.activeTabSession?.openDocument(at: url)
+                self?.activeWindowController?.windowSession?.activeTabSession?.openDocumentBypassingRouter(at: url)
             },
             newTabInActiveWindow: { [weak self] url in
                 guard let self, let controller = self.activeWindowController else { return }
