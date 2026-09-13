@@ -269,9 +269,9 @@ require_text "$mac_tab_policy" 'return state.tabCount > 0'
 require_text "$MAC_MENU" 'TabManagementDynamicItem.matches(item, key: dynamicItemKey)'
 require_text "$MAC_MENU" 'identifier.hasPrefix("activateTab:")'
 
-# 空文档没有可复制的内容：文件菜单、标签页右键菜单、工作区文件右键菜单三处一致置灰。
+# 空文档没有可复制的内容：文件菜单和工作区文件右键菜单一致置灰；
+# 文件操作已从标签页右键菜单中移除。
 require_text "$MAC_MENU" 'hasContent: windowSession.activeTabSession?.hasContent ?? false'
-require_text "$ROOT_DIR/macos/Sources/MarkLeaf/Views/TabBarController.swift" 'hasContent: contentProvider?(tabID) ?? false'
 require_text "$ROOT_DIR/macos/Sources/MarkLeaf/Views/SidebarView.swift" 'copyContent.isEnabled = hasCopyableContent(entry)'
 require_text "$ROOT_DIR/macos/Sources/MarkLeaf/Views/SidebarView.swift" 'menu.autoenablesItems = false'
 

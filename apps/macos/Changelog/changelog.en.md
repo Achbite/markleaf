@@ -2,11 +2,17 @@
 
 ## 1.7.6 — 2026-09-12
 
+### Added
+
+- Added Rename to the File menu for the currently opened local file.
+
 ### Changed
 
 - Workspace trees, lists, and search now use `.md` / `.txt`, with matching HTML tag spacing and entity decoding in previews and search.
 - Copy HTML now copies source text; ordinary formatted copy still provides both text and HTML.
 - Tree and document-list scans now run independently, and cancelled scans are no longer applied after switching or closing a workspace.
+- Save and Save All are now disabled automatically when the current file is unmodified or already saved.
+- File actions have been removed from the tab context menu; they remain available in the File menu.
 
 ### Fixed
 
@@ -19,6 +25,7 @@
 - Fixed auto-hide scrollbars not working in source mode.
 - Fixed outline clicks not jumping to the corresponding heading.
 - Fixed “Show Outline on the Right” showing as unchecked in the menu while enabled.
+- Fixed externally opened files, Open…, and recent files still creating a new tab when the external file open mode is set to Open in the Current Tab.
 
 ## 1.7.5 — 2026-09-10
 

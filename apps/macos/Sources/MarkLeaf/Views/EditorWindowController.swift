@@ -88,10 +88,6 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         tabBar.onContextAction = { [weak self] action, id in
             self?.handleTabContextAction(action, for: id)
         }
-        tabBar.workspaceRootProvider = { [weak self] in self?.session.workspaceRoot }
-        tabBar.contentProvider = { [weak self] id in
-            self?.windowSession?.session(for: id)?.hasContent ?? false
-        }
         tabBar.onReorder = { [weak self] from, to in
             guard let self else { return }
             self.windowSession?.tabStore.move(from: from, to: to)
@@ -471,8 +467,27 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         guard let window else { return }
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
-            self?.openFileInTab(url)
+            self?.openFileWithPreferredTarget(url)
         }
+    }
+
+    /// 按外部文件偏好决定目标：已打开文件优先激活；“当前标签页”替换活动标签。
+    func openFileWithPreferredTarget(_ url: URL) {
+        guard let windowSession else { return }
+        let identity = FileIdentityPolicy.identity(for: url)
+        if let existing = windowSession.tabStore.tab(withIdentity: identity) {
+            activateTab(existing.tabID, animated: true)
+            return
+        }
+        let mode = MultiTabModePolicy.externalFileMode(
+            SettingsService.shared.settings.externalFileOpenMode,
+            multiTabEnabled: SettingsService.shared.settings.multiTabEnabled
+        )
+        if mode == .currentWindow, let activeSession = windowSession.activeTabSession {
+            activeSession.openDocumentBypassingRouter(at: url)
+            return
+        }
+        openFileInTab(url)
     }
 
     func openFileInTab(_ url: URL) {
@@ -647,17 +662,6 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             closeOtherTabs(keeping: id)
         case .closeToRight:
             closeTabsToRight(of: index)
-        case .locate:
-            activateTab(id, animated: true)
-            revealTabInWorkspace(id)
-        case .copyPath:
-            copyTabPath(id)
-        case .copyContents:
-            copyTabContents(id)
-        case .revealInFinder:
-            revealTabInFinder(id)
-        case .share:
-            shareTab(id)
         }
     }
 
