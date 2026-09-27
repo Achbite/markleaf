@@ -9,7 +9,7 @@ import { Selection, TextSelection } from '@tiptap/pm/state'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { DOMSerializer, type Mark as ProseMirrorMark, type NodeType } from '@tiptap/pm/model'
-import { CellSelection, TableMap, cellAround } from '@tiptap/pm/tables'
+import { CellSelection, TableMap, cellAround, tableEditingKey } from '@tiptap/pm/tables'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import { Table, TableRow, TableHeader, TableCell, renderTableToMarkdown } from '@tiptap/extension-table'
@@ -1293,6 +1293,177 @@ const ThemedSelection = Extension.create({
             return false
           },
         },
+      },
+    })]
+  },
+})
+
+// WebKit keeps its own asynchronous drag-selection pipeline. In a table that
+// pipeline races with ProseMirror's CellSelection and makes the two highlight
+// modes alternate. MarkLeaf therefore owns plain mouse selection inside table
+// cells: character selection is synthesized inside one cell, and full-cell or
+// cross-cell drags are represented directly by CellSelection.
+const TableCellSelectionLock = Extension.create({
+  name: 'markleafTableCellSelectionLock',
+  addProseMirrorPlugins() {
+    let dragCell: Element | null = null
+    let dragPosition = 0
+    let cellSelectionLocked = false
+
+    const elementFromTarget = (target: EventTarget | null): Element | null => {
+      if (target instanceof Element) return target
+      if (target instanceof globalThis.Node) return target.parentElement
+      return null
+    }
+    const cellFromEvent = (view: Editor['view'], event: MouseEvent): Element | null => {
+      const element = elementFromTarget(event.target)
+      const cell = element?.closest('td,th') ?? null
+      return cell && view.dom.contains(cell) ? cell : null
+    }
+    const cellPosition = (view: Editor['view'], cell: Element): number | null => {
+      let position: number | null = null
+      view.state.doc.descendants((node, pos) => {
+        if (position !== null) return false
+        if ((node.type.name === 'tableCell' || node.type.name === 'tableHeader')
+          && view.nodeDOM(pos) === cell) {
+          position = pos
+          return false
+        }
+        return true
+      })
+      return position
+    }
+    const inlineTextRange = (view: Editor['view'], cell: Element): { from: number; to: number } | null => {
+      let range: { from: number; to: number } | null = null
+      view.state.doc.descendants((node, pos) => {
+        if (range) return false
+        if (node.type.name !== 'tableCell' && node.type.name !== 'tableHeader') return true
+        if (view.nodeDOM(pos) !== cell) return true
+
+        node.descendants((child, childPos) => {
+          if (!child.isInline || !child.isLeaf) return true
+          const from = pos + 1 + childPos
+          const to = from + child.nodeSize
+          range = range
+            ? { from: Math.min(range.from, from), to: Math.max(range.to, to) }
+            : { from, to }
+          return true
+        })
+        return false
+      })
+      return range
+    }
+    const upgradeFullCell = (view: Editor['view'], cell: Element): boolean => {
+      const { selection, doc } = view.state
+      if (!(selection instanceof TextSelection) || selection.empty) return false
+      const range = inlineTextRange(view, cell)
+      if (!range || selection.from > range.from || selection.to < range.to) return false
+
+      const position = cellPosition(view, cell)
+      if (position === null) return false
+
+      view.dom.classList.add('markleaf-cell-selection-locked')
+      cellSelectionLocked = true
+      clearDomSelection(view.dom.ownerDocument)
+
+      view.dispatch(view.state.tr
+        .setSelection(CellSelection.create(doc, position))
+        .setMeta('addToHistory', false))
+      return true
+    }
+    const unlockCellDrag = (view: Editor['view']): void => {
+      view.dom.classList.remove('markleaf-cell-selection-locked')
+      cellSelectionLocked = false
+    }
+
+    return [new Plugin({
+      view(view) {
+        const interactiveTarget = (target: EventTarget | null): boolean => {
+          const element = elementFromTarget(target)
+          return !!element?.closest('a,button,input,select,textarea,.markleaf-code-block-controls,.markleaf-expanded-source')
+        }
+        const startDrag = (event: MouseEvent) => {
+          if (event.button !== 0 || event.shiftKey || event.metaKey || event.ctrlKey) return
+          // Native double/triple click semantics remain available; mouseup can
+          // promote a complete-cell selection without touching that pipeline.
+          if (event.detail > 1 || interactiveTarget(event.target)) return
+          const cell = cellFromEvent(view, event)
+          if (!cell) return
+          const resolved = view.posAtCoords({ left: event.clientX, top: event.clientY })
+          if (!resolved) return
+          event.preventDefault()
+          event.stopPropagation()
+          unlockCellDrag(view)
+          dragCell = cell
+          view.focus()
+          const bias = 'bias' in resolved && typeof resolved.bias === 'number' ? resolved.bias : 1
+          const selection = TextSelection.near(view.state.doc.resolve(resolved.pos), bias)
+          dragPosition = selection.anchor
+          view.dispatch(view.state.tr
+            .setSelection(selection)
+            .setMeta('addToHistory', false))
+        }
+        const moveDrag = (event: MouseEvent) => {
+          if (!dragCell || event.buttons !== 1) return
+          const cell = cellFromEvent(view, event)
+          if (!cell) return
+          const resolved = view.posAtCoords({ left: event.clientX, top: event.clientY })
+          if (!resolved) return
+
+          if (cell !== dragCell) {
+            const anchorCellPosition = cellPosition(view, dragCell)
+            const headCellPosition = cellPosition(view, cell)
+            if (anchorCellPosition === null || headCellPosition === null) return
+            cellSelectionLocked = true
+            view.dom.classList.add('markleaf-cell-selection-locked')
+            view.dispatch(view.state.tr
+              .setSelection(CellSelection.create(view.state.doc, anchorCellPosition, headCellPosition))
+              .setMeta('addToHistory', false))
+            clearDomSelection(view.dom.ownerDocument)
+            return
+          }
+
+          const anchor = view.state.doc.resolve(Math.min(dragPosition, resolved.pos))
+          const head = view.state.doc.resolve(Math.max(dragPosition, resolved.pos))
+          const selection = TextSelection.between(anchor, head)
+          if (!selection.empty && !selection.eq(view.state.selection)) {
+            view.dispatch(view.state.tr
+              .setSelection(selection)
+              .setMeta('addToHistory', false))
+          }
+          if (!upgradeFullCell(view, cell)) {
+            view.dom.classList.add('markleaf-cell-selection-locked')
+            clearDomSelection(view.dom.ownerDocument)
+          }
+        }
+        const endDrag = (event: MouseEvent) => {
+          const cell = cellFromEvent(view, event) ?? dragCell
+          if (cell) upgradeFullCell(view, cell)
+          if (!cellSelectionLocked) unlockCellDrag(view)
+          dragCell = null
+        }
+
+        view.dom.addEventListener('mousedown', startDrag, true)
+        view.dom.ownerDocument.addEventListener('mousemove', moveDrag, true)
+        view.dom.ownerDocument.addEventListener('mouseup', endDrag, true)
+        const onKeyDown = (event: KeyboardEvent) => {
+          if (event.key !== 'Shift') unlockCellDrag(view)
+        }
+        view.dom.ownerDocument.addEventListener('keydown', onKeyDown, true)
+
+        return {
+          destroy() {
+            view.dom.removeEventListener('mousedown', startDrag, true)
+            view.dom.ownerDocument.removeEventListener('mousemove', moveDrag, true)
+            view.dom.ownerDocument.removeEventListener('mouseup', endDrag, true)
+            view.dom.ownerDocument.removeEventListener('keydown', onKeyDown, true)
+          },
+        }
+      },
+      filterTransaction: transaction => {
+        if (!cellSelectionLocked) return true
+        if (transaction.getMeta(tableEditingKey) != null) return true
+        return transaction.docChanged || transaction.selection instanceof CellSelection
       },
     })]
   },
@@ -3584,6 +3755,7 @@ const editorExtensions = [
   MarkLeafTable.configure({
     resizable: false,
   }),
+  TableCellSelectionLock,
   FootnoteReference,
   TableRow,
   TableHeader,
@@ -3654,6 +3826,23 @@ export function createEditor(
         spellcheck: 'true',
       },
       handleDOMEvents: {
+        mousedown: (view, event) => {
+          if (event.button !== 0) return false
+          const target = event.target
+          const element = target instanceof Element
+            ? target
+            : target instanceof globalThis.Node ? target.parentElement : null
+          const cell = element?.closest('td,th')
+          if (!cell || !view.dom.contains(cell)) return false
+          if (tableEditingKey.getState(view.state) == null) return false
+          // A missed table-plugin mouseup can leave its drag anchor armed.
+          // Reset it before the next press so the table plugin starts a fresh
+          // drag from the newly clicked cell.
+          view.dispatch(view.state.tr
+            .setMeta(tableEditingKey, -1)
+            .setMeta('addToHistory', false))
+          return false
+        },
         dragstart: (_view, event) => {
           if (editor.isEditable) return false
           event.dataTransfer?.clearData()

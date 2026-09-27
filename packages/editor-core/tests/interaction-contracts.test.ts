@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { CellSelection } from '@tiptap/pm/tables'
+import { CellSelection, tableEditingKey } from '@tiptap/pm/tables'
+import { TextSelection } from '@tiptap/pm/state'
 import { createEditor, executeEditorCommand, expandSourceEditor, exportEditorSelection, findInEditor, getMarkdown, getFootnoteLabels, replaceAllInEditor,
   replaceCurrentInEditor, setBlockHandleVisible, setMarkdownEditingSettings } from '../src/index'
 import { createEditorInteractions } from '../src/index'
@@ -151,7 +152,7 @@ describe('shared editing interactions', () => {
     expect(document.querySelectorAll('.selectedCell').length).toBe(3)
   })
 
-  it('does not redispatch an identical cell selection while the pointer moves', () => {
+  it('keeps an explicit cell selection while the pointer moves', () => {
     const { editor } = setup('| a | b | c |\n| - | - | - |\n| 1 | 2 | 3 |')
     const cellPositions: number[] = []
     editor.state.doc.descendants((node, pos) => {
@@ -180,31 +181,117 @@ describe('shared editing interactions', () => {
     move()
     move()
     expect(posAtCoordsSpy.mock.calls.length).toBeGreaterThan(0)
-    expect(dispatchSpy).toHaveBeenCalledTimes(1)
+    expect(dispatchSpy).toHaveBeenCalledTimes(3)
 
     document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
     posAtCoordsSpy.mockRestore()
     dispatchSpy.mockRestore()
   })
 
-  it('keeps native text selection available while dragging inside one table cell', () => {
+  it('synthesizes partial character selection while dragging inside one table cell', () => {
     const { editor } = setup('| first cell text | second cell |\n| --- | --- |', true)
     const firstCell = editor.view.dom.querySelector('th,td')!
-    const text = firstCell.querySelector('p')!.firstChild!
-    const domSelection = window.getSelection()!
-    domSelection.setBaseAndExtent(text, 0, text, 5)
-    // jsdom has no hit testing; both pointer events stay in the first cell.
-    vi.spyOn(editor.view, 'posAtCoords').mockReturnValue({ pos: 2, inside: -1 })
+    vi.spyOn(Object.getPrototypeOf(editor.view), 'posAtCoords')
+      .mockReturnValueOnce({ pos: 4, inside: -1 })
+      .mockReturnValueOnce({ pos: 9, inside: -1 })
 
     firstCell.dispatchEvent(new MouseEvent('mousedown', {
-      bubbles: true, button: 0, buttons: 1,
+      bubbles: true, button: 0, buttons: 1, detail: 1,
     }))
     firstCell.dispatchEvent(new MouseEvent('mousemove', {
-      bubbles: true, button: 0, buttons: 1,
+      bubbles: true, button: 0, buttons: 1, detail: 1,
     }))
 
     expect(editor.view.dom.classList.contains('markleaf-cell-selecting')).toBe(false)
-    expect(domSelection.toString()).toBe('first')
+    expect(editor.state.selection).toBeInstanceOf(TextSelection)
+    expect(editor.state.selection.from).toBe(4)
+    expect(editor.state.selection.to).toBe(9)
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
+  })
+
+  it('upgrades a complete same-cell selection to a stable cell selection', () => {
+    const { editor } = setup('| first cell text | second cell |\n| --- | --- |', true)
+    const firstCell = editor.view.dom.querySelector('th,td')!
+    let textRange: { from: number; to: number } | null = null
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name !== 'tableHeader' || editor.view.nodeDOM(pos) !== firstCell) return true
+      node.descendants((child, childPos) => {
+        if (!child.isText) return true
+        const from = pos + 1 + childPos
+        textRange = { from, to: from + child.nodeSize }
+        return false
+      })
+      return false
+    })
+    expect(textRange).toEqual({ from: 4, to: 19 })
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => firstCell,
+    })
+    vi.spyOn(Object.getPrototypeOf(editor.view), 'posAtCoords')
+      .mockReturnValueOnce({ pos: 4, inside: -1 })
+      .mockReturnValueOnce({ pos: 9, inside: -1 })
+      .mockReturnValueOnce({ pos: 19, inside: -1 })
+      .mockReturnValue({ pos: 4, inside: -1 })
+
+    // Partial character selection stays native while the pointer is inside
+    // the same cell.
+    firstCell.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true, button: 0, buttons: 1,
+    }))
+    editor.commands.setTextSelection({ from: 4, to: 9 })
+    firstCell.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true, button: 0, buttons: 1,
+    }))
+    expect(editor.state.selection).toBeInstanceOf(TextSelection)
+
+    // Selecting the complete cell content promotes once and then remains
+    // stable even if WebKit sends a late native-selection transaction.
+    editor.commands.setTextSelection(textRange!)
+    firstCell.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true, button: 0, buttons: 1, detail: 1,
+    }))
+    expect(editor.state.selection).toBeInstanceOf(CellSelection)
+    expect(editor.view.dom.classList.contains('markleaf-cell-selection-locked')).toBe(true)
+    editor.view.dispatch(editor.state.tr.setSelection(
+      TextSelection.between(editor.state.doc.resolve(4), editor.state.doc.resolve(9)),
+    ))
+    expect(editor.state.selection).toBeInstanceOf(CellSelection)
+
+    // A new plain press starts another character-selection session.
+    firstCell.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true, button: 0, buttons: 1, detail: 1,
+    }))
+    expect(editor.view.dom.classList.contains('markleaf-cell-selection-locked')).toBe(false)
+    editor.commands.setTextSelection({ from: 4, to: 9 })
+    expect(editor.state.selection).toBeInstanceOf(TextSelection)
+  })
+
+  it('creates a stable cell selection when a drag enters another cell', () => {
+    const { editor } = setup('| first cell text | second cell |\n| --- | --- |', true)
+    const [firstCell, secondCell] = Array.from(editor.view.dom.querySelectorAll('td,th'))
+    expect(firstCell).toBeDefined()
+    expect(secondCell).toBeDefined()
+    const firstCellElement = firstCell!
+    const secondCellElement = secondCell!
+    vi.spyOn(Object.getPrototypeOf(editor.view), 'posAtCoords')
+      .mockReturnValueOnce({ pos: 4, inside: -1 })
+      .mockReturnValue({ pos: 23, inside: -1 })
+
+    firstCellElement.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true, button: 0, buttons: 1,
+    }))
+    secondCellElement.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true, button: 0, buttons: 1,
+    }))
+
+    expect(editor.state.selection).toBeInstanceOf(CellSelection)
+    expect(editor.state.selection.ranges.length).toBe(2)
+    expect(editor.view.dom.classList.contains('markleaf-cell-selection-locked')).toBe(true)
+    editor.view.dispatch(editor.state.tr.setSelection(
+      TextSelection.between(editor.state.doc.resolve(4), editor.state.doc.resolve(9)),
+    ))
+    expect(editor.state.selection).toBeInstanceOf(CellSelection)
     document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
   })
 

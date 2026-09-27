@@ -45,6 +45,7 @@
 - Fixed Markdown and plain-text files dragged from Finder not opening.
 - Fixed unstable highlights, whole-line false highlights, or selections that could not be cleared during long-document drags, Shift+arrow selection, or autoscroll near window edges.
 - Fixed copying only the current cell when multiple table cells were selected.
+- Fixed table drag selection flickering between text and whole-cell highlights.
 - Fixed right-clicking inside a drag selection collapsing it to the clicked position.
 - Fixed a brief false highlight of preceding text when dragging across boundaries with CJK and Western auto-spacing enabled.
 - Fixed inaccurate heading and paragraph positioning, improving reading-position restoration.

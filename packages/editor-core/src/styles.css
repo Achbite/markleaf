@@ -237,6 +237,21 @@ body.markleaf-theme-dark {
   color: var(--text-selected);
 }
 
+/* While a Word-style table cell drag is locked, freeze WebKit's native text
+   highlight. The cell overlay is painted from one ProseMirror state instead
+   of alternating with the browser's asynchronous text selection. */
+.ProseMirror.markleaf-cell-selection-locked,
+.ProseMirror.markleaf-cell-selection-locked * {
+  user-select: none !important;
+}
+
+.ProseMirror.markleaf-cell-selection-locked ::selection,
+.ProseMirror.markleaf-cell-selection-locked *::selection {
+  background: transparent !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
 .markleaf-themed-visual-selection .markleaf-document ::selection {
   background: transparent;
   color: inherit;
