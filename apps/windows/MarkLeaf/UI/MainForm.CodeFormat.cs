@@ -8,6 +8,12 @@ internal sealed partial class MainForm
 {
     private void OnCodeFormatRequested(object? sender, CodeFormatRequest request)
     {
+        // 诊断：记录编辑器实际发来的代码轮廓（长度/首行/可见首尾/选区行号），
+        // 用于排查"编辑器内容与磁盘不一致"类问题。
+        _logger.Info(
+            $"codeFormatRequested: language={request.Language}, chars={request.Code.Length}, "
+            + $"firstLine={ExternalCodeFormatterService.FirstLine(request.Code)}, "
+            + $"head={Describe(request.Code, 60)}, selection={request.StartLine}-{request.EndLine}");
         var tool = ExternalCodeFormatterCatalog.ToolForLanguage(request.Language);
         if (tool is null)
         {
@@ -75,6 +81,30 @@ internal sealed partial class MainForm
         _editorHost?.SendCodeFormatResult(request.RequestId, CodeFormatStatus.Formatted, code: outcome.FormattedCode);
         SetStatus(Loc.Get("codeFormatter.formatted"));
         _logger.Info($"External code formatted with {toolId}.");
+    }
+
+    /// <summary>把控制字符与换行转成可见符号，便于在日志里辨认缩进与不可见字符。</summary>
+    private static string Describe(string text, int maximum)
+    {
+        var builder = new System.Text.StringBuilder();
+        foreach (var ch in text)
+        {
+            if (builder.Length >= maximum)
+            {
+                builder.Append('…');
+                break;
+            }
+
+            builder.Append(ch switch
+            {
+                '\r' => "\\r",
+                '\n' => "\\n",
+                '\t' => "\\t",
+                _ => char.IsControl(ch) ? $"\\u{(int)ch:X4}" : ch,
+            });
+        }
+
+        return builder.ToString();
     }
 
     /// <summary>把常见的外部失败原因映射为本地化提示，其余原样透出。</summary>
