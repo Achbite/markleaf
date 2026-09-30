@@ -101,6 +101,8 @@ public sealed class JsonSettingsService : ISettingsService
         NormalizeExport(settings.Export);
         settings.Shortcut ??= new ShortcutSettings();
         NormalizeShortcuts(settings.Shortcut);
+        settings.CodeFormatter ??= new CodeFormatterSettings();
+        NormalizeCodeFormatter(settings.CodeFormatter);
         settings.SchemaVersion = AppSettings.CurrentSchemaVersion;
         return settings;
     }
@@ -114,6 +116,8 @@ public sealed class JsonSettingsService : ISettingsService
         NormalizeExport(settings.Export);
         settings.Shortcut ??= new ShortcutSettings();
         NormalizeShortcuts(settings.Shortcut);
+        settings.CodeFormatter ??= new CodeFormatterSettings();
+        NormalizeCodeFormatter(settings.CodeFormatter);
         settings.SchemaVersion = AppSettings.CurrentSchemaVersion;
         return settings;
     }
@@ -142,8 +146,25 @@ public sealed class JsonSettingsService : ISettingsService
         settings.Shortcut.Overrides ??= [];
         settings.Shortcut.Cleared ??= [];
         NormalizeShortcuts(settings.Shortcut);
+        settings.CodeFormatter ??= new CodeFormatterSettings();
+        NormalizeCodeFormatter(settings.CodeFormatter);
         return settings;
     }
+
+    private static void NormalizeCodeFormatter(CodeFormatterSettings codeFormatter)
+    {
+        codeFormatter.ToolPaths ??= [];
+        if (!SqlFluffDialects.Contains(codeFormatter.SqlDialect, StringComparer.Ordinal))
+        {
+            codeFormatter.SqlDialect = "ansi";
+        }
+    }
+
+    private static readonly string[] SqlFluffDialects =
+    [
+        "ansi", "bigquery", "clickhouse", "duckdb", "hive", "materialize", "mysql",
+        "oracle", "postgres", "redshift", "snowflake", "sparksql", "sqlite", "trino", "tsql",
+    ];
 
     private static void NormalizeShortcuts(ShortcutSettings shortcuts)
     {

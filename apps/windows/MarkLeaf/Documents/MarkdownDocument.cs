@@ -2,7 +2,6 @@ using System.Text;
 using MarkLeaf.Services;
 
 namespace MarkLeaf.Documents;
-
 public sealed class MarkdownDocument
 {
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -24,6 +23,18 @@ public sealed class MarkdownDocument
     public bool IsDirty { get; set; }
 
     public bool IsReadOnly { get; set; }
+
+    /// <summary>
+    /// 用户通过视图菜单手动开启的只读模式。与 <see cref="IsReadOnly"/>（文件
+    /// 权限或"以只读方式打开"决定的持久只读）分开记录，标签页切换时跟随文档。
+    /// </summary>
+    public bool IsUserReadOnly { get; set; }
+
+    /// <summary>
+    /// 与 packages/editor-core/src/reading-anchor.ts 对齐的稳定阅读锚点，
+    /// 在标签页切换/关闭时随快照捕获，重新激活时经 loadDocument 恢复。
+    /// </summary>
+    public MarkLeaf.Editor.ReadingAnchor? ReadingAnchor { get; set; }
 
     // Visual and source editors use different position coordinate systems.
     public int? VisualSelectionFrom { get; set; }

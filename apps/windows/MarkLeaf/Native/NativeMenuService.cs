@@ -1324,6 +1324,7 @@ internal sealed class NativeMenuService : IDisposable
             AppendSeparator(menu);
             AppendMainMenuCommand(menu, AppCommand.ToggleEditorFocusMode, Loc.Get("menu.view.editorFocusMode"));
             AppendMainMenuCommand(menu, AppCommand.ToggleEditorTypewriterMode, Loc.Get("menu.view.editorTypewriterMode"));
+            AppendMainMenuCommand(menu, AppCommand.ToggleReadOnlyMode, Loc.Get("menu.view.readOnlyMode"));
             AppendSeparator(menu);
             _zoomMenu = CreateMenu(true);
             AppendMainMenuCommand(menu, AppCommand.ShowThemeSettings, Loc.Get("menu.view.theme"));

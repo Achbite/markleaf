@@ -34,7 +34,8 @@ internal sealed partial class MainForm
             ClearLogs,
             OpenSettingsJson,
             ClearHistory,
-            () => _ = CheckForUpdatesAsync());
+            () => _ = CheckForUpdatesAsync(),
+            ShowCodeFormatterManager);
         if (ShowModal(() => dialog.ShowDialog(this)) != DialogResult.OK) return;
         ApplyPreferencesChanges(previousAssociateMarkdown, previousAssociateText, previousLanguage);
     }
@@ -62,6 +63,7 @@ internal sealed partial class MainForm
         _editorHost?.ApplySourceSettings(editor.SourceIndentWidth);
         _editorHost?.ApplyAutoConvertUnsafeEmphasis(editor.AutoConvertUnsafeEmphasis);
         _editorHost?.ApplyMarkdownEditingSettings(editor);
+        ApplyCodeFormatterSettings();
         ApplyCodeHighlightVisibility();
         ApplyBlockHandleVisibility();
 
@@ -84,6 +86,20 @@ internal sealed partial class MainForm
         UpdateDocumentChrome();
 
         SaveSettings();
+    }
+
+    /// <summary>
+    /// 打开外部代码格式化器管理对话框。变更立即写入活动设置（管理器语义，
+    /// 与 macOS 一致），并即时下发可用语言与持久化。
+    /// </summary>
+    private void ShowCodeFormatterManager()
+    {
+        using var dialog = new CodeFormatterSettingsDialog(_settings.CodeFormatter, () =>
+        {
+            ApplyCodeFormatterSettings();
+            SaveSettings();
+        });
+        ShowModal(() => dialog.ShowDialog(this));
     }
 
     private void ShowAbout()

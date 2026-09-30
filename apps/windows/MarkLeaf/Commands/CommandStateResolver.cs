@@ -42,8 +42,13 @@ public static class CommandStateResolver
                 !context.FocusMode && context.SidebarVisible && !context.IndependentOutlineSidebar,
                 context.OutlineActive),
 
+            // 只读模式下保存被禁用（含 Ctrl+S 快捷键）；如需落盘请先退出只读，
+            // 或经"另存为"写出副本（与 macOS 宿主的只读命令拦截策略一致）。
             AppCommand.SaveDocument or AppCommand.SaveDocumentAs =>
-                new(context.DocumentAvailable && context.EditorReady),
+                new(context.DocumentAvailable && context.EditorReady && !context.ReadOnlyMode),
+            AppCommand.ToggleReadOnlyMode => new(
+                context.DocumentAvailable && context.EditorReady && context.ReadOnlyCanBeToggled,
+                context.ReadOnlyMode),
             AppCommand.ExportWithLastSettings or AppCommand.ExportPdf or AppCommand.ExportHtml
                 or AppCommand.ExportImage or AppCommand.Print =>
                 new(context.DocumentAvailable && context.EditorReady),

@@ -142,6 +142,11 @@ internal sealed partial class MainForm
             ShowCodeHighlight: _settings.Appearance.ShowCodeHighlight,
             ListViewActive: _workspaceListViewActive,
             IndependentOutlineSidebar: _outlineDetached,
+            // 有效只读 = 文件级只读（权限/以只读打开）或用户手动开启的只读模式；
+            // 文件级只读无法通过菜单切回可写，因此不可切换。
+            ReadOnlyMode: _document is { } readOnlyDocument
+                && (readOnlyDocument.IsReadOnly || readOnlyDocument.IsUserReadOnly),
+            ReadOnlyCanBeToggled: _document is not null && !_document.IsReadOnly,
             EditorActions: _editorCommandStatus.Actions);
         var state = CommandStateResolver.Resolve(command, context);
         if (command is AppCommand.Paste or AppCommand.PastePlainText)
@@ -255,6 +260,9 @@ internal sealed partial class MainForm
                 break;
             case AppCommand.ToggleEditorTypewriterMode:
                 ToggleEditorTypewriterMode();
+                break;
+            case AppCommand.ToggleReadOnlyMode:
+                ToggleReadOnlyMode();
                 break;
             case AppCommand.SwitchToWorkspace:
                 ShowSidebarView(outline: false);

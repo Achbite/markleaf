@@ -175,6 +175,7 @@ internal sealed partial class MainForm
             _document.Markdown = snapshot.Markdown;
             _document.Revision = Math.Max(_document.Revision, snapshot.Revision);
             _document.ScrollTop = snapshot.ScrollTop;
+            _document.ReadingAnchor = snapshot.ReadingAnchor;
         }
 
         StopWatchingDocument();
@@ -334,6 +335,7 @@ internal sealed partial class MainForm
                 _document.Markdown = snapshot.Markdown;
                 _document.Revision = Math.Max(_document.Revision, snapshot.Revision);
                 _document.ScrollTop = snapshot.ScrollTop;
+                _document.ReadingAnchor = snapshot.ReadingAnchor;
             }
 
             StopWatchingDocument();
@@ -366,6 +368,7 @@ internal sealed partial class MainForm
                 target.Markdown = snapshot.Markdown;
                 target.Revision = Math.Max(target.Revision, snapshot.Revision);
                 target.ScrollTop = snapshot.ScrollTop;
+                target.ReadingAnchor = snapshot.ReadingAnchor;
             }
             if (target.IsDirty)
             {
@@ -708,6 +711,13 @@ internal sealed partial class MainForm
             return false;
         }
 
+        if (_document.IsUserReadOnly)
+        {
+            // 用户只读模式下禁用保存；需要落盘请先退出只读（与 macOS 一致）。
+            SetStatus(Loc.Get("status.readOnlySaveBlocked"));
+            return false;
+        }
+
         var targetPath = _document.FilePath;
         if (saveAs || targetPath is null || _document.IsReadOnly)
         {
@@ -766,6 +776,13 @@ internal sealed partial class MainForm
 
             _document.Revision = Math.Max(snapshot.Revision, _editorSession.ConfirmedRevision);
             _document.IsDirty = _document.Revision > snapshot.Revision;
+            _document.ReadingAnchor = snapshot.ReadingAnchor;
+            // 无并发编辑时才回传保存基线；revision 落后说明编辑器已有新改动，
+            // 此时让编辑器保持脏状态（与 macOS 宿主约定一致）。
+            if (_document.Revision == snapshot.Revision)
+            {
+                _editorHost?.MarkSaved(snapshot.Markdown);
+            }
             StopWatchingDocument();
             StartWatchingDocument(_document.FilePath!);
             _documentTabBar.SetDocuments(_openDocuments, _activeDocumentIndex);
@@ -1035,7 +1052,7 @@ internal sealed partial class MainForm
             document.Id,
             document.Revision,
             document.Markdown,
-            document.IsReadOnly,
+            document.IsReadOnly || document.IsUserReadOnly,
             document.FilePath is null ? document.Kind.EditorDocumentType() : GetDocumentType(document.FilePath),
             document.FilePath,
             document.VisualSelectionFrom,
@@ -1043,7 +1060,8 @@ internal sealed partial class MainForm
             document.SourceSelectionFrom,
             document.SourceSelectionTo,
             restoreScrollTop,
-            restoreScrollPosition);
+            restoreScrollPosition,
+            restoreScrollPosition ? document.ReadingAnchor : null);
         if (_pendingEditorRevealDocumentId is null)
         {
             _editorPanel.Visible = true;
@@ -1065,6 +1083,7 @@ internal sealed partial class MainForm
         _document.Markdown = snapshot.Markdown;
         _document.Revision = Math.Max(_document.Revision, snapshot.Revision);
         _document.ScrollTop = snapshot.ScrollTop;
+        _document.ReadingAnchor = snapshot.ReadingAnchor;
     }
 
     private void ShowEncodingMenu()
@@ -1294,7 +1313,7 @@ internal sealed partial class MainForm
     {
         UpdateEditorAreaBackground();
         var name = _document?.DisplayName ?? "MarkLeaf";
-        if (_document?.IsReadOnly == true)
+        if (_document is { } chromeDocument && (chromeDocument.IsReadOnly || chromeDocument.IsUserReadOnly))
         {
             name += Loc.Get("document.readOnlySuffix");
         }

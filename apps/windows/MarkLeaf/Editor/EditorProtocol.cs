@@ -40,6 +40,7 @@ public static class EditorProtocol
         "unsafeEmphasisRequested",
         "footnoteDefinitionMissing",
         "footnoteReferenceMissing",
+        "codeFormatRequested",
         "error",
     ];
 
@@ -52,6 +53,11 @@ public static class EditorProtocol
         "applyStyles",
         "localizeFindBar",
         "unsafeEmphasisResponse",
+        "restoreViewport",
+        "markSaved",
+        "refreshOutline",
+        "setCodeFormatterSettings",
+        "codeFormatResult",
     ];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -165,7 +171,8 @@ public static class EditorProtocol
             "ready" or "documentLoaded" or "stylesApplied" => IsMissingOrObject(payload),
             "dirtyChanged" => HasProperty(payload, "dirty", JsonValueKind.True, JsonValueKind.False),
             "snapshot" => HasProperty(payload, "markdown", JsonValueKind.String)
-                && HasOptionalNonNegativeNumber(payload, "scrollTop"),
+                && HasOptionalNonNegativeNumber(payload, "scrollTop")
+                && HasOptionalReadingAnchor(payload),
             "selectionChanged" => HasIntegerProperty(payload, "from")
                 && HasIntegerProperty(payload, "to")
                 && HasOptionalBooleanProperty(payload, "sourceMode"),
@@ -207,6 +214,12 @@ public static class EditorProtocol
                     || error.ValueKind == JsonValueKind.Null
                     || error.ValueKind == JsonValueKind.String && (error.GetString()?.Length ?? 0) <= 256),
             "pasteImage" => IsMissingOrObject(payload),
+            "codeFormatRequested" => HasProperty(payload, "code", JsonValueKind.String)
+                && HasProperty(payload, "language", JsonValueKind.String)
+                && (!payload.TryGetProperty("startLine", out var startLine)
+                    || startLine.ValueKind == JsonValueKind.Number && startLine.TryGetInt32(out var s) && s >= 1)
+                && (!payload.TryGetProperty("endLine", out var endLine)
+                    || endLine.ValueKind == JsonValueKind.Number && endLine.TryGetInt32(out var e) && e >= 1),
             "error" => HasProperty(payload, "message", JsonValueKind.String),
             _ => payload.ValueKind == JsonValueKind.Object,
         };
@@ -344,6 +357,44 @@ public static class EditorProtocol
             && value.ValueKind == JsonValueKind.Number
             && value.TryGetInt32(out var number)
             && number >= 0;
+    }
+
+    // 与 packages/editor-core/src/reading-anchor.ts 的归一化契约对齐：
+    // kind 为 visual|source，0 <= ordinal <= total-1，total >= 1，0 <= fraction <= 1。
+    private static bool HasOptionalReadingAnchor(JsonElement payload)
+    {
+        if (payload.ValueKind != JsonValueKind.Object
+            || !payload.TryGetProperty("readingAnchor", out var anchor))
+        {
+            return true;
+        }
+
+        if (anchor.ValueKind == JsonValueKind.Null)
+        {
+            return true;
+        }
+
+        return anchor.ValueKind == JsonValueKind.Object
+            && anchor.TryGetProperty("kind", out var kind)
+            && kind.ValueKind == JsonValueKind.String
+            && kind.GetString() is "visual" or "source"
+            && HasNonNegativeInteger(anchor, "ordinal")
+            && HasPositiveIntegerBounded(anchor, "total")
+            && HasProperty(anchor, "token", JsonValueKind.String)
+            && anchor.TryGetProperty("fraction", out var fraction)
+            && fraction.ValueKind == JsonValueKind.Number
+            && fraction.TryGetDouble(out var fractionValue)
+            && double.IsFinite(fractionValue)
+            && fractionValue is >= 0 and <= 1;
+    }
+
+    private static bool HasPositiveIntegerBounded(JsonElement payload, string name)
+    {
+        return payload.ValueKind == JsonValueKind.Object
+            && payload.TryGetProperty(name, out var value)
+            && value.ValueKind == JsonValueKind.Number
+            && value.TryGetInt32(out var number)
+            && number is >= 1 and <= 1_000_000;
     }
 
     private static bool HasOptionalNonNegativeInteger(JsonElement payload, string name)

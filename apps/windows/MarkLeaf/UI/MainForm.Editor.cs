@@ -69,6 +69,7 @@ internal sealed partial class MainForm
             _editorHost?.ApplySourceSettings(e.SourceIndentWidth);
             _editorHost?.ApplyAutoConvertUnsafeEmphasis(e.AutoConvertUnsafeEmphasis);
             _editorHost?.ApplyMarkdownEditingSettings(e);
+            ApplyCodeFormatterSettings();
             ApplyCodeHighlightVisibility();
             ApplyBlockHandleVisibility();
             SetZoomPercent(_settings.Appearance.RestoreZoomOnOpen ? _zoomPercent : 100);
@@ -111,6 +112,7 @@ internal sealed partial class MainForm
         _editorHost.CodeBlockLanguageRequested += OnCodeBlockLanguageRequested;
         _editorHost.CopyCodeBlockRequested += OnCopyCodeBlockRequested;
         _editorHost.MermaidEditRequested += OnMermaidEditRequested;
+        _editorHost.CodeFormatRequested += OnCodeFormatRequested;
         _editorHost.OutlineChanged += OnEditorOutlineChanged;
         _editorHost.OutlineSelectionChanged += OnEditorOutlineSelectionChanged;
         _editorHost.OpenLinkRequested += OnOpenLinkRequested;

@@ -449,7 +449,9 @@ internal sealed partial class MainForm
     private void ApplyBlockHandleVisibility()
     {
         var visible = _settings.Editor.ShowParagraphBlockHandle
-            && _document?.IsReadOnly != true
+            && _document is { } blockHandleDocument
+            && !blockHandleDocument.IsReadOnly
+            && !blockHandleDocument.IsUserReadOnly
             && !_focusMode;
         _editorHost?.ApplyBlockHandleVisibility(visible);
     }
@@ -465,6 +467,40 @@ internal sealed partial class MainForm
     {
         _editorTypewriterMode = !_editorTypewriterMode;
         _editorHost?.SetEditorTypewriterMode(_editorTypewriterMode);
+        _menuService.RefreshStates();
+    }
+
+    private void ToggleReadOnlyMode()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        // 文件级只读（权限不足或"以只读方式打开"）不能经菜单切回可写；
+        // 该状态下菜单项已被禁用，这里只兜底。
+        if (_document.IsReadOnly)
+        {
+            SetStatus(Loc.Get("status.readOnlyFileLocked"));
+            return;
+        }
+
+        _document.IsUserReadOnly = !_document.IsUserReadOnly;
+        ApplyReadOnlyMode();
+    }
+
+    private void ApplyReadOnlyMode()
+    {
+        if (_document is null)
+        {
+            return;
+        }
+
+        var readOnly = _document.IsReadOnly || _document.IsUserReadOnly;
+        _editorHost?.SetReadOnly(readOnly);
+        SetStatus(Loc.Get(readOnly ? "status.readOnlyEnabled" : "status.readOnlyDisabled"));
+        ApplyBlockHandleVisibility();
+        UpdateDocumentChrome();
         _menuService.RefreshStates();
     }
 

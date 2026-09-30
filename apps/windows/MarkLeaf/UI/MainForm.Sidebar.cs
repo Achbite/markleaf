@@ -563,6 +563,19 @@ internal sealed partial class MainForm
         UpdateViewToggleIcon();
         if (_workspaceRoot is null) ShowNoWorkspacePlaceholder();
         SetStatus(Loc.Get("status.sidebarExpanded"));
+        RequestOutlineRefreshAfterVisibilityChange();
+    }
+
+    /// <summary>
+    /// 侧栏显隐/视图切换后重新拉取大纲，让"大纲 N 项"状态与列表恢复一致；
+    /// 对应 macOS 宿主侧栏可见性变化时的 requestOutlineRefresh 契约。
+    /// </summary>
+    private void RequestOutlineRefreshAfterVisibilityChange()
+    {
+        if (_editorHost?.IsDocumentLoaded == true)
+        {
+            _editorHost.RefreshOutline();
+        }
     }
 
     private void AnimateSidebar(bool collapsed)
@@ -1112,6 +1125,10 @@ internal sealed partial class MainForm
             _openFolderPrompt.BringToFront();
 
         UpdateSidebarSearchEnabled();
+        if (outline)
+        {
+            RequestOutlineRefreshAfterVisibilityChange();
+        }
         _menuService.RefreshStates();
     }
 

@@ -48,6 +48,7 @@ internal sealed class EditorHostController : IDisposable
     private bool _lastDocumentReadOnly;
     private string? _lastDocumentType;
     private string? _lastDocumentPath;
+    private ReadingAnchor? _lastDocumentReadingAnchor;
     private bool _replayDocumentAfterNavigation;
 
     public event EventHandler? Ready;
@@ -92,6 +93,13 @@ internal sealed class EditorHostController : IDisposable
 
     public event EventHandler? FootnoteDefinitionMissing;
     public event EventHandler? FootnoteReferenceMissing;
+
+    /// <summary>
+    /// 编辑器请求格式化一段代码。Payload 含 code/language，可选 startLine/endLine
+    /// （1 起始、闭区间，只格式化选区行时出现）。宿主完成格式化后必须以相同
+    /// requestId 回 codeFormatResult，否则编辑器 15 秒后超时提示。
+    /// </summary>
+    public event EventHandler<CodeFormatRequest>? CodeFormatRequested;
 
     public EditorHostController(
         WebView2 webView,
@@ -247,7 +255,8 @@ internal sealed class EditorHostController : IDisposable
         int? sourceSelectionFrom = null,
         int? sourceSelectionTo = null,
         double scrollTop = 0,
-        bool restoreViewState = true)
+        bool restoreViewState = true,
+        ReadingAnchor? readingAnchor = null)
     {
         _lastDocumentId = documentId;
         _lastDocumentRevision = revision;
@@ -255,6 +264,7 @@ internal sealed class EditorHostController : IDisposable
         _lastDocumentReadOnly = readOnly;
         _lastDocumentType = documentType;
         _lastDocumentPath = documentPath;
+        _lastDocumentReadingAnchor = readingAnchor;
         EnqueueOrRun(() =>
         {
             _session.StartDocument(documentId, revision);
@@ -275,6 +285,7 @@ internal sealed class EditorHostController : IDisposable
                     : null,
                 scrollTop = double.IsFinite(scrollTop) && scrollTop >= 0 ? scrollTop : 0,
                 restoreViewState,
+                readingAnchor = readingAnchor?.ToPayload(),
             });
         });
     }
@@ -426,6 +437,63 @@ internal sealed class EditorHostController : IDisposable
     public void ApplyBlockHandleVisibility(bool enabled)
     {
         EnqueueOrRun(() => Post("command", new { command = "setBlockHandleVisible", text = enabled ? "1" : "0" }));
+    }
+
+    /// <summary>
+    /// 设置只读模式。编辑器内部会拦截所有修改命令；宿主侧菜单与保存流程
+    /// 仍以文档模型上的只读状态为准。
+    /// </summary>
+    public void SetReadOnly(bool enabled)
+    {
+        EnqueueOrRun(() => Post("command", new { command = "setReadOnly", text = enabled ? "1" : "0" }));
+    }
+
+    /// <summary>
+    /// 保存成功后把保存的全文回传给编辑器，作为撤销脏判断基线；
+    /// revision 与当前一致（无并发编辑）时才应调用，与 macOS 宿主一致。
+    /// </summary>
+    public void MarkSaved(string markdown)
+    {
+        EnqueueOrRun(() => Post("markSaved", new { markdown }));
+    }
+
+    /// <summary>
+    /// 请求编辑器重新推送大纲（侧栏显隐变化后同步"大纲 N 项"状态）。
+    /// </summary>
+    public void RefreshOutline()
+    {
+        EnqueueOrRun(() => Post("refreshOutline"));
+    }
+
+    /// <summary>
+    /// 下发本机可用的外部代码格式化器语言并集；编辑器据此决定代码块
+    /// 菜单是否提供"用外部格式化器格式化"入口。
+    /// </summary>
+    public void SetCodeFormatterSettings(IReadOnlyList<string> languages)
+    {
+        EnqueueOrRun(() => Post("setCodeFormatterSettings", new { languages }));
+    }
+
+    /// <summary>
+    /// 文档已加载后的二次视口恢复（阅读锚点、滚动位置、选区）。
+    /// 与 loadDocument 内联恢复的区别是：此时布局已稳定，适合延迟校正。
+    /// </summary>
+    public void RestoreViewport(
+        double? scrollTop = null,
+        (int From, int To)? selection = null,
+        ReadingAnchor? readingAnchor = null)
+    {
+        if (scrollTop is null && selection is null && readingAnchor is null)
+        {
+            return;
+        }
+
+        EnqueueOrRun(() => Post("restoreViewport", new
+        {
+            scrollTop,
+            selection = selection is { } range ? new { from = range.From, to = range.To } : null,
+            readingAnchor = readingAnchor?.ToPayload(),
+        }));
     }
 
     public void SetZoomPercent(int percent)
@@ -1455,6 +1523,32 @@ internal sealed class EditorHostController : IDisposable
             case "footnoteReferenceMissing":
                 FootnoteReferenceMissing?.Invoke(this, EventArgs.Empty);
                 break;
+            case "codeFormatRequested":
+                if (string.IsNullOrWhiteSpace(message.RequestId))
+                {
+                    _logger.Warning("Rejected codeFormatRequested without a request id.");
+                    break;
+                }
+
+                CodeFormatRequested?.Invoke(
+                    this,
+                    new CodeFormatRequest(
+                        message.RequestId,
+                        message.Payload.GetProperty("code").GetString() ?? string.Empty,
+                        message.Payload.GetProperty("language").GetString() ?? string.Empty,
+                        message.Payload.TryGetProperty("startLine", out var formatStart)
+                            && formatStart.ValueKind == JsonValueKind.Number
+                            && formatStart.TryGetInt32(out var startLine)
+                            && startLine >= 1
+                            ? startLine
+                            : null,
+                        message.Payload.TryGetProperty("endLine", out var formatEnd)
+                            && formatEnd.ValueKind == JsonValueKind.Number
+                            && formatEnd.TryGetInt32(out var endLine)
+                            && endLine >= 1
+                            ? endLine
+                            : null));
+                break;
             case "snapshot":
                 if (_session.CompleteRequest(message.RequestId, "snapshot"))
                 {
@@ -1469,8 +1563,12 @@ internal sealed class EditorHostController : IDisposable
                             && parsedScrollTop >= 0
                             ? parsedScrollTop
                             : 0;
+                        var readingAnchor = message.Payload.TryGetProperty("readingAnchor", out var anchorElement)
+                            && anchorElement.ValueKind == JsonValueKind.Object
+                            ? ReadingAnchor.FromJson(anchorElement)
+                            : null;
                         completion.TrySetResult(
-                            new EditorSnapshot(markdownElement.GetString() ?? string.Empty, message.Revision, scrollTop));
+                            new EditorSnapshot(markdownElement.GetString() ?? string.Empty, message.Revision, scrollTop, readingAnchor));
                     }
                     SnapshotReceived?.Invoke(this, message);
                 }
@@ -1569,8 +1667,32 @@ internal sealed class EditorHostController : IDisposable
                 readOnly = _lastDocumentReadOnly,
                 documentType = _lastDocumentType,
                 documentPath = _lastDocumentPath,
+                readingAnchor = _lastDocumentReadingAnchor?.ToPayload(),
             });
         }
+    }
+
+    /// <summary>
+    /// 回传外部格式化结果，requestId 必须与 codeFormatRequested 一致。
+    /// </summary>
+    public void SendCodeFormatResult(
+        string requestId,
+        CodeFormatStatus status,
+        string? code = null,
+        string? message = null)
+    {
+        if (string.IsNullOrWhiteSpace(requestId))
+        {
+            return;
+        }
+
+        var payload = status switch
+        {
+            CodeFormatStatus.Formatted => (object)new { status = "formatted", code },
+            CodeFormatStatus.Unchanged => new { status = "unchanged" },
+            _ => new { status = "failed", message },
+        };
+        EnqueueOrRun(() => Post("codeFormatResult", payload, requestId));
     }
 
     private void EnqueueOrRun(Action action)
@@ -1662,3 +1784,18 @@ internal sealed class EditorHostController : IDisposable
 internal sealed record DroppedFiles(IReadOnlyList<string> Paths, double ClientX, double ClientY);
 
 internal sealed record EditorFindResult(int Current, int Total, int? Replaced);
+
+internal sealed record CodeFormatRequest(
+    string RequestId,
+    string Code,
+    string Language,
+    int? StartLine,
+    int? EndLine);
+
+internal enum CodeFormatStatus
+{
+    Formatted,
+    Unchanged,
+    Failed,
+}
+

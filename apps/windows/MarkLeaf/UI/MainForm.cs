@@ -63,6 +63,7 @@ internal sealed partial class MainForm : Form
     private FileSystemWatcher? _documentWatcher;
     private FileSystemWatcher? _workspaceWatcher;
     private readonly RecoveryService _recoveryService;
+    private readonly Services.CodeFormatting.ExternalCodeFormatterService _codeFormatterService;
     private readonly System.Windows.Forms.Timer _recoveryTimer = new() { Interval = 30_000 };
     private readonly System.Windows.Forms.Timer _autoSaveTimer = new() { Interval = 500 };
     private readonly System.Windows.Forms.Timer _statusMessageTimer = new() { Interval = 5_000 };
@@ -246,6 +247,7 @@ internal sealed partial class MainForm : Form
             TimeSpan.FromMilliseconds(500),
             QueueWorkspaceRefresh);
         _recoveryService = new RecoveryService(paths.RecoveryDirectory, logger);
+        _codeFormatterService = new Services.CodeFormatting.ExternalCodeFormatterService(logger);
         _recoveryService.SnapshotSaved += (_, time) =>
             BeginInvoke(() => SetStatus(Loc.Format("status.snapshotSaved", $"{time.LocalDateTime:HH:mm:ss}")));
         _recoveryTimer.Tick += OnRecoveryTimerTick;

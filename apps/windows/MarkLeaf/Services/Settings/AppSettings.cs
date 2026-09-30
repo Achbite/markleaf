@@ -91,6 +91,8 @@ public sealed class AppSettings
 
     public ShortcutSettings Shortcut { get; set; } = new();
 
+    public CodeFormatterSettings CodeFormatter { get; set; } = new();
+
     public string MarkdownStyle { get; set; } = "serif";
 
     public string ColorTheme { get; set; } = "apple-blue";
@@ -309,6 +311,17 @@ public sealed class EditorSettings
     public bool ShowParagraphBlockHandle { get; set; } = true;
 
     public string? UnsafeEmphasisPreference { get; set; }
+}
+
+/// <summary>
+/// 外部代码格式化器设置。ToolPaths 为工具 id → 可执行文件/jar 自定义路径；
+/// 与 macOS 的 codeFormatterPaths 键空间一致。SqlDialect 仅作用于 sqlfluff。
+/// </summary>
+public sealed class CodeFormatterSettings
+{
+    public Dictionary<string, string> ToolPaths { get; set; } = [];
+
+    public string SqlDialect { get; set; } = "ansi";
 }
 
 public sealed class FileSettings

@@ -99,6 +99,7 @@ public enum AppCommand
     ToggleFocusMode = 0x1308,
     ToggleEditorFocusMode = 0x1328,
     ToggleEditorTypewriterMode = 0x1329,
+    ToggleReadOnlyMode = 0x132B,
     SelectAll = 0x1309,
     ExitCode = 0x130A,
     EditMath = 0x130B,
@@ -186,4 +187,6 @@ public readonly record struct CommandContext(
     bool ListViewActive = false,
     bool IndependentOutlineSidebar = false,
     bool EditorFullScreen = false,
+    bool ReadOnlyMode = false,
+    bool ReadOnlyCanBeToggled = false,
     IReadOnlyDictionary<string, CommandState>? EditorActions = null);
