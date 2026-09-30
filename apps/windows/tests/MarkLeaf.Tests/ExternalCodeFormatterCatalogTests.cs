@@ -77,6 +77,25 @@ public sealed class ExternalCodeFormatterCatalogTests
 public sealed class ExternalCodeFormatterServiceTests
 {
     [TestMethod]
+    public void Format_RunsRealBlackWhenInstalled()
+    {
+        var tool = ExternalCodeFormatterCatalog.ToolForLanguage("python")!;
+        var resolved = ExternalCodeFormatterCatalog.ResolveExecutable(tool, new Dictionary<string, string>());
+        if (resolved is null)
+        {
+            // 环境条件集成测试：本机装了 black 才真实执行，CI/Mac 上静默跳过。
+            Assert.Inconclusive("black is not on PATH; skipping the live formatter run.");
+            return;
+        }
+
+        var service = new ExternalCodeFormatterService(new TestLogger());
+        var outcome = service.Format(tool, "x=1\n", resolved, new Dictionary<string, string>(), "ansi");
+
+        Assert.IsTrue(outcome.Success, outcome.ErrorMessage);
+        Assert.AreEqual("x = 1\n", outcome.FormattedCode);
+    }
+
+    [TestMethod]
     public void FirstLine_ReturnsTextBeforeFirstBreak()
     {
         Assert.AreEqual(
