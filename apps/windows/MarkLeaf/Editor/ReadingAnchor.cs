@@ -25,7 +25,8 @@ public sealed record ReadingAnchor(
         if (element.ValueKind != JsonValueKind.Object
             || !element.TryGetProperty("kind", out var kind)
             || kind.ValueKind != JsonValueKind.String
-            || !Enum.TryParse(kind.GetString(), ignoreCase: false, out ReadingAnchorKind anchorKind)
+            // 前端契约固定发小写 visual|source；忽略大小写以兼容手写载荷。
+            || !Enum.TryParse(kind.GetString(), ignoreCase: true, out ReadingAnchorKind anchorKind)
             || !element.TryGetProperty("ordinal", out var ordinal) || !ordinal.TryGetInt32(out var ordinalValue)
             || ordinalValue < 0
             || !element.TryGetProperty("total", out var total) || !total.TryGetInt32(out var totalValue)

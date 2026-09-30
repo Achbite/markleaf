@@ -79,7 +79,9 @@ public sealed class ExternalCodeFormatterServiceTests
     [TestMethod]
     public void FirstLine_ReturnsTextBeforeFirstBreak()
     {
-        Assert.AreEqual("can't locate File/HomeDir.pm", ExternalCodeFormatterService.FirstLine("can't locate File/HomeDir.pm in @INC\r\nsecond line\n"));
+        Assert.AreEqual(
+            "can't locate File/HomeDir.pm in @INC",
+            ExternalCodeFormatterService.FirstLine("can't locate File/HomeDir.pm in @INC\r\nsecond line\n"));
         Assert.AreEqual("plain", ExternalCodeFormatterService.FirstLine("plain"));
         Assert.AreEqual("", ExternalCodeFormatterService.FirstLine("  \r\n"));
     }
