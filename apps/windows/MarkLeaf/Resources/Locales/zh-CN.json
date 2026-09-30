@@ -985,7 +985,7 @@
   "codeFormatter.browseTitle": "选择 {0} 可执行文件",
   "codeFormatter.filterExecutable": "可执行文件",
   "codeFormatter.filterAll": "所有文件",
-  "codeFormatter.hint": "格式化器按 PATH 与常见包管理器目录探测；google-java-format 可指向 jar。",
+  "codeFormatter.hint": "格式化器按 PATH 与常见包管理器目录探测。",
   "codeFormatter.formatting": "正在格式化代码…",
   "codeFormatter.formatted": "代码已格式化",
   "codeFormatter.unchanged": "代码格式无变化",

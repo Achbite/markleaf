@@ -982,7 +982,7 @@
   "codeFormatter.browseTitle": "{0} の実行ファイルを選択",
   "codeFormatter.filterExecutable": "実行ファイル",
   "codeFormatter.filterAll": "すべてのファイル",
-  "codeFormatter.hint": "フォーマッターは PATH と主要パッケージマネージャーのディレクトリから検出されます。google-java-format は jar を指定できます。",
+  "codeFormatter.hint": "フォーマッターは PATH と主要パッケージマネージャーのディレクトリから検出されます。",
   "codeFormatter.formatting": "コードを整形中…",
   "codeFormatter.formatted": "コードを整形しました",
   "codeFormatter.unchanged": "コードは既に整形されています",

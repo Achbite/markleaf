@@ -982,7 +982,7 @@
   "codeFormatter.browseTitle": "Select the {0} executable",
   "codeFormatter.filterExecutable": "Executable",
   "codeFormatter.filterAll": "All files",
-  "codeFormatter.hint": "Formatters are discovered via PATH and common package-manager directories; google-java-format may point to a jar.",
+  "codeFormatter.hint": "Formatters are discovered via PATH and common package-manager directories.",
   "codeFormatter.formatting": "Formatting code…",
   "codeFormatter.formatted": "Code formatted",
   "codeFormatter.unchanged": "Code already formatted",

@@ -982,7 +982,7 @@
   "codeFormatter.browseTitle": "選擇 {0} 執行檔",
   "codeFormatter.filterExecutable": "執行檔",
   "codeFormatter.filterAll": "所有檔案",
-  "codeFormatter.hint": "格式化器按 PATH 與常見套件管理器目錄探測；google-java-format 可指向 jar。",
+  "codeFormatter.hint": "格式化器按 PATH 與常見套件管理器目錄探測。",
   "codeFormatter.formatting": "正在格式化程式碼…",
   "codeFormatter.formatted": "程式碼已格式化",
   "codeFormatter.unchanged": "程式碼格式無變化",
