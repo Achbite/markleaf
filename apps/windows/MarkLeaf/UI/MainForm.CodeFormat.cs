@@ -56,9 +56,12 @@ internal sealed partial class MainForm
 
         if (!outcome.Success)
         {
+            var reason = DescribeFormatterError(outcome.ErrorMessage);
             _editorHost?.SendCodeFormatResult(
-                request.RequestId, CodeFormatStatus.Failed, message: DescribeFormatterError(outcome.ErrorMessage));
-            SetStatus(Loc.Get("codeFormatter.failed"));
+                request.RequestId, CodeFormatStatus.Failed, message: reason);
+            // 状态栏透出格式化器的原始诊断（如 black 的 Cannot parse 行:列），
+            // 笼统的"失败"无法帮助用户定位语法问题。
+            SetStatus(reason);
             return;
         }
 
