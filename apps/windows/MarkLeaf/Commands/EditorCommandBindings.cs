@@ -75,6 +75,7 @@ internal static class EditorCommandBindings
             AppCommand.RerenderAllMermaid => "rerenderAllMermaid",
             AppCommand.ClearFormat => "clearFormat",
             AppCommand.FormatPainter => "formatPainter",
+            AppCommand.FormatCodeBlock => "formatCodeBlock",
             _ => string.Empty,
         };
         return editorCommand.Length > 0;
