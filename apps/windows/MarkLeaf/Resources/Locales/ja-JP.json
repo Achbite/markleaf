@@ -991,5 +991,8 @@
   "codeFormatter.notInstalled": "{0} が見つかりません。設定でパスを指定してください",
   "codeFormatter.missingJava": "Java ランタイムが見つかりません。google-java-format には Java が必要です",
   "prefs.editor.markdown.codeFormatter.label": "コードフォーマッター",
-  "prefs.editor.markdown.codeFormatter.manage": "フォーマッターを管理…"
+  "prefs.editor.markdown.codeFormatter.manage": "フォーマッターを管理…",
+  "menu.format.formatCodeBlock": "コードブロックを整形(&O)",
+  "contextMenu.code.formatBlock": "コードを整形(&O)",
+  "shortcut.formatCodeBlock": "コードブロックを整形"
 }

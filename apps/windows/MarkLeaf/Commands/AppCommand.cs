@@ -100,6 +100,7 @@ public enum AppCommand
     ToggleEditorFocusMode = 0x1328,
     ToggleEditorTypewriterMode = 0x1329,
     ToggleReadOnlyMode = 0x132B,
+    FormatCodeBlock = 0x132C,
     SelectAll = 0x1309,
     ExitCode = 0x130A,
     EditMath = 0x130B,

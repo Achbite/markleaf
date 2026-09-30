@@ -109,6 +109,7 @@ internal static class EditorCommandBindings
             AppCommand.ToggleSourceMode => "toggleSourceMode",
             AppCommand.ToggleEditorFocusMode => "setEditorFocusMode",
             AppCommand.ToggleEditorTypewriterMode => "setEditorTypewriterMode",
+            AppCommand.FormatCodeBlock => "formatCodeBlock",
             _ => string.Empty,
         };
         return identifier.Length > 0;

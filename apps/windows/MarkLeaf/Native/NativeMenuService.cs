@@ -724,11 +724,18 @@ internal sealed class NativeMenuService : IDisposable
             }
             else if (status.FrontMatter)
             {
-                AppendCodeContextMenu(menu, commands, includeLanguage: false);
+                AppendCodeContextMenu(menu, commands, includeLanguage: false, includeFormat: false);
             }
             else if (status.CodeBlock)
             {
-                AppendCodeContextMenu(menu, commands, includeLanguage: true);
+                // 格式化入口的可用性由前端 actions 决定：内置格式化器语言本地处理，
+                // 外部格式化器语言需宿主已通过 setCodeFormatterSettings 下发。
+                AppendCodeContextMenu(
+                    menu,
+                    commands,
+                    includeLanguage: true,
+                    includeFormat: status.Actions.TryGetValue("formatCodeBlock", out var formatAction)
+                        && formatAction.IsEnabled);
             }
             else
             {
@@ -860,12 +867,17 @@ internal sealed class NativeMenuService : IDisposable
         }
     }
 
-    private void AppendCodeContextMenu(nint menu, List<AppCommand> commands, bool includeLanguage)
+    private void AppendCodeContextMenu(nint menu, List<AppCommand> commands, bool includeLanguage, bool includeFormat)
     {
         if (includeLanguage)
         {
             AppendCommand(menu, AppCommand.DeclareCodeLanguage, Loc.Get("contextMenu.code.declareLanguage"));
             commands.Add(AppCommand.DeclareCodeLanguage);
+        }
+        if (includeFormat)
+        {
+            AppendCommand(menu, AppCommand.FormatCodeBlock, Loc.Get("contextMenu.code.formatBlock"));
+            commands.Add(AppCommand.FormatCodeBlock);
         }
         AppendCommand(menu, AppCommand.CopyCodeBlock, Loc.Get("contextMenu.code.copyBlock"));
         AppendSeparator(menu);
@@ -1031,6 +1043,7 @@ internal sealed class NativeMenuService : IDisposable
         AppendPopup(menu, Loc.Get("menu.format.image"), BuildImageSubmenu());
         AppendSeparator(menu);
         AppendMainMenuCommand(menu, AppCommand.FormatPainter, Loc.Get("menu.format.formatPainter"));
+        AppendMainMenuCommand(menu, AppCommand.FormatCodeBlock, Loc.Get("menu.format.formatCodeBlock"));
         AppendSeparator(menu);
         AppendMainMenuCommand(menu, AppCommand.ClearFormat, Loc.Get("menu.format.clearFormat"));
         return menu;

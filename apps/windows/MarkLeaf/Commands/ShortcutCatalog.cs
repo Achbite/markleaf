@@ -64,6 +64,7 @@ public static class ShortcutCatalog
         new(AppCommand.DecreaseListIndent, "shortcut.decreaseIndent", Keys.Control | Keys.Oem4),
         new(AppCommand.InsertTable, "shortcut.insertTable", Keys.Control | Keys.T),
         new(AppCommand.InsertFootnote, "shortcut.insertFootnote", Keys.Control | Keys.Shift | Keys.F),
+        new(AppCommand.FormatCodeBlock, "shortcut.formatCodeBlock", Keys.Shift | Keys.Alt | Keys.F),
         new(AppCommand.PromoteHeading, "shortcut.promoteHeading", Keys.Control | Keys.OemPeriod),
         new(AppCommand.DemoteHeading, "shortcut.demoteHeading", Keys.Control | Keys.Oemcomma),
         new(AppCommand.ToggleFocusMode, "shortcut.toggleFocusMode", Keys.Shift | Keys.F11),

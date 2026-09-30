@@ -991,5 +991,8 @@
   "codeFormatter.notInstalled": "{0} was not found; set its path in settings",
   "codeFormatter.missingJava": "No Java runtime found; google-java-format requires Java",
   "prefs.editor.markdown.codeFormatter.label": "Code formatters",
-  "prefs.editor.markdown.codeFormatter.manage": "Manage formatters…"
+  "prefs.editor.markdown.codeFormatter.manage": "Manage formatters…",
+  "menu.format.formatCodeBlock": "Format Code Block(&O)",
+  "contextMenu.code.formatBlock": "Format Code(&O)",
+  "shortcut.formatCodeBlock": "Format code block"
 }

@@ -994,5 +994,8 @@
   "codeFormatter.notInstalled": "未找到 {0}，可在设置中指定路径",
   "codeFormatter.missingJava": "未找到 Java 运行时，google-java-format 需要 Java",
   "prefs.editor.markdown.codeFormatter.label": "代码格式化器",
-  "prefs.editor.markdown.codeFormatter.manage": "管理格式化器…"
+  "prefs.editor.markdown.codeFormatter.manage": "管理格式化器…",
+  "menu.format.formatCodeBlock": "格式化代码块(&O)",
+  "contextMenu.code.formatBlock": "格式化代码(&O)",
+  "shortcut.formatCodeBlock": "格式化代码块"
 }
