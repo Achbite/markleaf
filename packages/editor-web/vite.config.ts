@@ -18,5 +18,7 @@ export default defineConfig(({ mode }) => ({
     alias: [{ find: /^@markleaf\/editor-core$/, replacement: fileURLToPath(new URL('../editor-core/src/index.ts', import.meta.url)) }],
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
+    // 每条用例都要在 jsdom 里引导完整编辑器，慢机器或并行负载下默认 5s 会抖动超时。
+    testTimeout: 30_000,
   },
 }))

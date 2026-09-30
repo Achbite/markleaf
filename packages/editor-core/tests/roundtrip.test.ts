@@ -17,6 +17,7 @@ import {
   replaceCurrentInEditor,
   pasteClipboardContentWithResult,
   pasteMarkdownTextWithResult,
+  setImageResourceResolver,
   setMarkdownEditingSettings,
 } from '../src/index'
 
@@ -34,6 +35,7 @@ afterEach(() => {
   document.documentElement.style.removeProperty('--highlight')
   document.documentElement.style.removeProperty('--text-primary')
   setMarkdownEditingSettings({})
+  setImageResourceResolver()
 })
 
 function roundTrip(markdown: string): string {
@@ -1126,6 +1128,15 @@ describe('paragraph menu commands', () => {
   })
 
   it('renders absolute image paths through the isolated asset host', () => {
+    // 模拟原生宿主注入的资源解析器；URL 契约与 editor-web 的
+    // native-capabilities.ts（assets.local）保持一致。
+    setImageResourceResolver({
+      resolve(path) {
+        let decoded = path
+        try { decoded = decodeURIComponent(path) } catch { /* 字面百分号属于路径本身 */ }
+        return `https://assets.local/image?path=${encodeURIComponent(decoded)}`
+      },
+    })
     const element = document.createElement('div')
     document.body.append(element)
     const editor = createEditor(element, '![diagram](C:/Pictures/my%20image.png)')
@@ -1138,6 +1149,13 @@ describe('paragraph menu commands', () => {
   })
 
   it('inserts an image node through the host command payload', () => {
+    setImageResourceResolver({
+      resolve(path) {
+        let decoded = path
+        try { decoded = decodeURIComponent(path) } catch { /* 字面百分号属于路径本身 */ }
+        return `https://assets.local/image?path=${encodeURIComponent(decoded)}`
+      },
+    })
     const element = document.createElement('div')
     document.body.append(element)
     const editor = createEditor(element, '')

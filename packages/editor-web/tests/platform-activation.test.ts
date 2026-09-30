@@ -83,17 +83,19 @@ function openLinkCount(messages: EditorMessage[]): number {
 }
 
 describe('primary activation modifier', () => {
+  // 链接激活自内核统一重构（3203175）起绑定在 mount 的 click 事件上，
+  // 派发必须用 click；此前测试用 mousedown 导致两条平台契约静默失效。
   it('uses Command and leaves Control-click to the context menu on macOS', async () => {
     const { anchor, messages } = await loadLink('macOS')
 
-    anchor.dispatchEvent(new MouseEvent('mousedown', {
+    anchor.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
       button: 0,
       ctrlKey: true,
     }))
     expect(openLinkCount(messages)).toBe(0)
 
-    anchor.dispatchEvent(new MouseEvent('mousedown', {
+    anchor.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
       button: 0,
       metaKey: true,
@@ -104,14 +106,14 @@ describe('primary activation modifier', () => {
   it('keeps Ctrl-click activation for the Windows/default host', async () => {
     const { anchor, messages } = await loadLink()
 
-    anchor.dispatchEvent(new MouseEvent('mousedown', {
+    anchor.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
       button: 0,
       metaKey: true,
     }))
     expect(openLinkCount(messages)).toBe(0)
 
-    anchor.dispatchEvent(new MouseEvent('mousedown', {
+    anchor.dispatchEvent(new MouseEvent('click', {
       bubbles: true,
       button: 0,
       ctrlKey: true,

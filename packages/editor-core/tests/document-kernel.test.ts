@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TextDecoder } from 'node:util'
 import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { decodeDocument, detectEncoding, detectNewLine, encodeDocument, normalizeNewLines, readPreview, type NativeCodec } from '../src/document/encoding'
 import { documentPlainText, documentSnippet } from '../src/document/projection'
 import { dirtyAfterSave, ownsRecoveryFile, parseRecovery, serializeRecovery, validateSave } from '../src/document/transactions'
@@ -26,7 +27,10 @@ describe('DOM-free document semantics', () => {
     expect(documentPlainText('**literal** &amp; <tag>', false)).toBe('**literal** &amp; <tag>')
   })
   it('consumes the shared projection examples', () => {
-    const fixture = JSON.parse(readFileSync(new URL('../../../tests/fixtures/workspace-text.json', import.meta.url), 'utf8'))
+    // 不能用 new URL(相对路径, import.meta.url)：Vite/Vitest 会把它改写为 http
+    // 资源 URL，node:fs 拒绝非 file 协议。与 roundtrip.test.ts 一致用 import.meta.dirname。
+    const fixturePath = resolve(import.meta.dirname, '../../../tests/fixtures/workspace-text.json')
+    const fixture = JSON.parse(readFileSync(fixturePath, 'utf8'))
     for (const item of fixture.projections) expect(documentPlainText(item.source, item.isMarkdown), item.name).toBe(item.expected)
   })
   it('returns snippets without cutting an emoji', () => {

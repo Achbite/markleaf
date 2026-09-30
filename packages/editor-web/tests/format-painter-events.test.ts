@@ -144,8 +144,11 @@ it('applies after a backward mouse selection reaches ProseMirror after mouseup',
   document.dispatchEvent(new Event('selectionchange'))
   await new Promise((resolve) => window.setTimeout(resolve, 0))
 
-  expect(requestMarkdown(send, editorMessages))
-    .toEqual({ scrollTop: 0, markdown: '**source**\n\n**target line**' })
+  expect(requestMarkdown(send, editorMessages)).toEqual({
+    scrollTop: 0,
+    markdown: '**source**\n\n**target line**',
+    readingAnchor: { kind: 'visual', ordinal: 1, token: 'target line', total: 2, fraction: 0 },
+  })
 })
 
 it('applies to a whole paragraph dragged backward without waiting for selectionchange', async () => {
@@ -158,8 +161,11 @@ it('applies to a whole paragraph dragged backward without waiting for selectionc
   editorDom.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
   await new Promise((resolve) => window.setTimeout(resolve, 0))
 
-  expect(requestMarkdown(send, editorMessages))
-    .toEqual({ scrollTop: 0, markdown: '**source**\n\n**target line**' })
+  expect(requestMarkdown(send, editorMessages)).toEqual({
+    scrollTop: 0,
+    markdown: '**source**\n\n**target line**',
+    readingAnchor: { kind: 'visual', ordinal: 1, token: 'target line', total: 2, fraction: 0 },
+  })
 })
 
 it('applies to multiple paragraphs dragged backward without waiting for selectionchange', async () => {
@@ -184,6 +190,7 @@ it('applies to multiple paragraphs dragged backward without waiting for selectio
   expect(requestMarkdown(send, editorMessages)).toEqual({
     scrollTop: 0,
     markdown: '**source**\n\n**first target**\n\n**second target**',
+    readingAnchor: { kind: 'visual', ordinal: 2, token: 'second target', total: 3, fraction: 0 },
   })
 })
 
@@ -199,8 +206,11 @@ it('applies when a backward whole-line drag ends on the editor padding at line s
   editorMount.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
   await new Promise((resolve) => window.setTimeout(resolve, 0))
 
-  expect(requestMarkdown(send, editorMessages))
-    .toEqual({ scrollTop: 0, markdown: '**source**\n\n**target line**' })
+  expect(requestMarkdown(send, editorMessages)).toEqual({
+    scrollTop: 0,
+    markdown: '**source**\n\n**target line**',
+    readingAnchor: { kind: 'visual', ordinal: 1, token: 'target line', total: 2, fraction: 0 },
+  })
 })
 
 it('applies when a backward multi-line drag ends on the editor padding at a line start', async () => {
@@ -225,5 +235,6 @@ it('applies when a backward multi-line drag ends on the editor padding at a line
   expect(requestMarkdown(send, editorMessages)).toEqual({
     scrollTop: 0,
     markdown: '**source**\n\n**first target**\n\n**second target**',
+    readingAnchor: { kind: 'visual', ordinal: 2, token: 'second target', total: 3, fraction: 0 },
   })
 })
