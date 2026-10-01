@@ -43,6 +43,7 @@
 - Fixed the “Visual Settings…” button not being localized.
 - Fixed the titlebar MarkLeaf or filename occasionally starting off-center and jumping on launch.
 - Fixed Markdown and plain-text files dragged from Finder not opening.
+- Fixed opening a missing document from Open Recent with no tabs open showing no error and leaving an invalid document behind when a new tab was created.
 - Fixed unstable highlights, whole-line false highlights, or selections that could not be cleared during long-document drags, Shift+arrow selection, or autoscroll near window edges.
 - Fixed copying only the current cell when multiple table cells were selected.
 - Fixed table drag selection flickering between text and whole-cell highlights.

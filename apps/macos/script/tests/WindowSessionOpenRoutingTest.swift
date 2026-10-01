@@ -45,5 +45,5 @@ guard case .created(let newTab) = miss else {
     exit(1)
 }
 expect(newTab.path == "/tmp/B.md" && newTab.title == "B.md", "created tab carries path and title")
-expect(store.tab(withID: newTab.tabID) != nil, "created tab is appended to the store")
+expect(store.tab(withID: newTab.tabID) == nil, "created tab stays pending until its file is loaded")
 print("PASS")

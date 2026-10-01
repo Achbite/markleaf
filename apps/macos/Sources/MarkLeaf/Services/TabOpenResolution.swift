@@ -19,7 +19,6 @@ enum TabOpenResolution {
             encoding: "UTF-8",
             newLine: "LF"
         )
-        store.append(tab)
         return .created(tab)
     }
 }

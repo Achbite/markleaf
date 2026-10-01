@@ -610,25 +610,55 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     /// 使用窗口去重结果打开文件（避免二次去重造成已建标签不加载文档）。
     func handleOpenResolution(_ resolution: TabOpenResolution.Result, url: URL) {
         guard let windowSession else { return }
-        guard MultiTabModePolicy.allowsTabCreation(isEnabled: SettingsService.shared.settings.multiTabEnabled) else {
-            windowSession.activeTabSession?.openDocumentBypassingRouter(at: url)
+        if case .activateExisting(let id) = resolution {
+            activateTab(id, animated: true)
+            tabBarController?.reload()
             return
         }
+
         let prepared: PreparedDocument
         do {
             prepared = try PreparedDocument.read(from: url)
         } catch {
-            windowSession.activeTabSession?.presentError(L10n.f("无法打开文档：%@", error.localizedDescription))
+            presentDocumentOpenError(error)
             return
         }
+
+        guard MultiTabModePolicy.allowsTabCreation(isEnabled: SettingsService.shared.settings.multiTabEnabled) else {
+            if let activeSession = windowSession.activeTabSession {
+                activeSession.openDocumentBypassingRouter(at: url)
+            } else if case .created(let tab) = resolution {
+                windowSession.tabStore.append(tab)
+                _ = ensureEditor(for: tab, prepared: prepared)
+                activateTab(tab.tabID, animated: true)
+                tabBarController?.reload()
+            }
+            return
+        }
+
         switch resolution {
-        case .activateExisting(let id):
-            activateTab(id, animated: true)
         case .created(let tab):
+            windowSession.tabStore.append(tab)
             _ = ensureEditor(for: tab, prepared: prepared)
             activateTab(tab.tabID, animated: true)
+        case .activateExisting:
+            return
         }
         tabBarController?.reload()
+    }
+
+    private func presentDocumentOpenError(_ error: Error) {
+        let message = L10n.f("无法打开文档：%@", error.localizedDescription)
+        AppLog.error(message)
+        guard let window else { return }
+        let alert = NSAlert()
+        alert.messageText = message
+        alert.alertStyle = .warning
+        if window.attachedSheet == nil {
+            alert.beginSheetModal(for: window)
+        } else {
+            alert.runModal()
+        }
     }
 
     func newUntitledTab(kind: NewDocumentKind = .markdown) {
