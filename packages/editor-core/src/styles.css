@@ -285,6 +285,15 @@ body.markleaf-theme-dark {
   overflow: hidden;
 }
 
+/* 公式是不可编辑的原子节点。KaTeX 把内容拆成大量字形级 span，WebKit 的
+   异步选区一旦触及（例如点击公式把上文锚点延伸到公式）就会逐字形绘制
+   主题选区，把一次普通点击固化成跨段高亮。公式选中态由 ProseMirror 的
+   NodeSelection 边框表达，这里从源头禁止浏览器在公式内容上起选区。 */
+.markleaf-math,
+.markleaf-math * {
+  user-select: none;
+}
+
 .markleaf-math-placeholder {
   color: var(--text-secondary);
 }
