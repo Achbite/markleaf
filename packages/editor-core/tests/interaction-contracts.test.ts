@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CellSelection, tableEditingKey } from '@tiptap/pm/tables'
-import { TextSelection } from '@tiptap/pm/state'
+import { NodeSelection, TextSelection } from '@tiptap/pm/state'
 import { createEditor, executeEditorCommand, expandSourceEditor, exportEditorSelection, findInEditor, getMarkdown, getFootnoteLabels, replaceAllInEditor,
   replaceCurrentInEditor, setBlockHandleVisible, setMarkdownEditingSettings } from '../src/index'
 import { createEditorInteractions } from '../src/index'
@@ -358,6 +358,88 @@ describe('shared editing interactions', () => {
     source.dispatchEvent(new Event('input'))
     expect(editor.state.doc).toBe(before)
   })
+
+  it('takes over formula clicks before WebKit can extend the previous text selection', () => {
+    const { editor, mount } = setup('previous text\n\n$$x^2$$', true)
+    const interactions = createEditorInteractions({
+      mount,
+      getEditor: () => editor,
+      enabled: () => editor.isEditable,
+      onMenu: vi.fn(),
+      label: 'Block menu',
+    })
+    cleanup.push(interactions.dispose)
+    const formula = mount.querySelector<HTMLElement>('.markleaf-math-block')!
+    const originalElementFromPoint = document.elementFromPoint
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => formula,
+    })
+    cleanup.push(() => Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: originalElementFromPoint,
+    }))
+    editor.commands.setTextSelection({ from: 1, to: 8 })
+
+    const event = new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      buttons: 1,
+      clientX: 10,
+      clientY: 10,
+    })
+    formula.dispatchEvent(event)
+
+    expect(event.defaultPrevented).toBe(true)
+    expect(editor.state.selection).toBeInstanceOf(NodeSelection)
+    expect(editor.state.selection.from).toBeGreaterThan(8)
+    expect(window.getSelection()?.isCollapsed ?? true).toBe(true)
+  })
+
+  it('clears the native formula range after mouseup without collapsing the node selection', async () => {
+    const { editor, mount } = setup('previous text\n\n$$x^2$$', true)
+    const interactions = createEditorInteractions({
+      mount,
+      getEditor: () => editor,
+      enabled: () => editor.isEditable,
+      onMenu: vi.fn(),
+      label: 'Block menu',
+    })
+    cleanup.push(interactions.dispose)
+    const formula = mount.querySelector<HTMLElement>('.markleaf-math-block')!
+    const originalElementFromPoint = document.elementFromPoint
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => formula,
+    })
+    cleanup.push(() => Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: originalElementFromPoint,
+    }))
+    editor.commands.setTextSelection({ from: 1, to: 8 })
+
+    const down = new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+      button: 0,
+      buttons: 1,
+      clientX: 10,
+      clientY: 10,
+    })
+    formula.dispatchEvent(down)
+    const nativeSelection = window.getSelection()!
+    const nativeRange = document.createRange()
+    nativeRange.selectNodeContents(formula)
+    nativeSelection.removeAllRanges()
+    nativeSelection.addRange(nativeRange)
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
+
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(editor.state.selection).toBeInstanceOf(NodeSelection)
+    expect(window.getSelection()?.isCollapsed ?? true).toBe(true)
+  })
+
   it('routes literal-source paste, selection and deletion through the same commands', async () => {
     const { editor } = setup('$$abcdef$$')
     expect(expandSourceEditor(editor, 0, 'mathBlock')).toBe(true)

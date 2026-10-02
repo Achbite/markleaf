@@ -5,7 +5,7 @@ import { resolveEditorActions, getEditorSemanticContext, type EditorActionContex
 import type { EditorCommandState, EditorStatus } from './editor-state'
 export type { EditorCommandState, EditorStatus } from './editor-state'
 import { Editor, Extension, InputRule, Mark, Node, ResizableNodeView, renderNestedMarkdownContent } from '@tiptap/core'
-import { Selection, TextSelection } from '@tiptap/pm/state'
+import { NodeSelection, Selection, TextSelection } from '@tiptap/pm/state'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { DOMSerializer, type Mark as ProseMirrorMark, type NodeType } from '@tiptap/pm/model'
@@ -1164,6 +1164,22 @@ const ThemedSelection = Extension.create({
           selectionHighlightInstance?.clear()
           highlightRange = null
         }
+        const clearNativeNodeSelection = () => {
+          clearDomSelection(view.dom.ownerDocument)
+          // WebKit may restore the node's DOM range during the following
+          // selection-to-DOM pass. Clear once immediately and once after the
+          // next frame so a rendered atom never exposes glyph-level ranges.
+          window.setTimeout(() => {
+            if (view.state.selection instanceof NodeSelection) {
+              clearDomSelection(view.dom.ownerDocument)
+            }
+          }, 0)
+          window.setTimeout(() => {
+            if (view.state.selection instanceof NodeSelection) {
+              clearDomSelection(view.dom.ownerDocument)
+            }
+          }, 16)
+        }
         const isSingleCellTextSelection = () => {
           const selection = view.state.selection
           if (!(selection instanceof TextSelection)) return false
@@ -1173,6 +1189,17 @@ const ThemedSelection = Extension.create({
         }
         const paintSelectionHighlight = () => {
           const { from, to, empty } = view.state.selection
+          if (view.state.selection instanceof NodeSelection) {
+            // ProseMirror represents a node selection by selecting the node's
+            // DOM contents in WebKit. For rendered atoms (especially KaTeX),
+            // that native range paints individual glyph boxes and can retain
+            // a stale range from the preceding text selection. NodeSelection
+            // is already rendered by `.ProseMirror-selectednode`; keep the
+            // native DOM selection empty instead.
+            clearSelectionHighlight()
+            clearNativeNodeSelection()
+            return
+          }
           if (view.state.selection instanceof CellSelection) {
             clearSelectionHighlight()
             clearDomSelection(view.dom.ownerDocument)
@@ -1213,6 +1240,10 @@ const ThemedSelection = Extension.create({
 
         mount.addEventListener('mousedown', handleBackgroundMouseDown)
         const handleMouseUp = () => {
+          if (view.state.selection instanceof NodeSelection) {
+            clearNativeNodeSelection()
+            return
+          }
           if (view.state.selection instanceof CellSelection) {
             clearDomSelection(view.dom.ownerDocument)
             return

@@ -156,6 +156,19 @@ export function bindDocumentPointerInteractions(
       position,
       wasSelected: selected instanceof NodeSelection && selected.from === position,
     }
+
+    // Atom rendering is not editable content. Letting WebKit perform its
+    // native mousedown selection first can extend the previous text anchor
+    // across the KaTeX glyph tree and paint a document-spanning highlight for
+    // one or more frames before the click handler installs NodeSelection.
+    // Take ownership at mousedown so the browser never gets a chance to
+    // create that transient range. A second click still reaches click below
+    // and toggles the source editor because `wasSelected` was captured first.
+    event.preventDefault()
+    event.stopPropagation()
+    editorMount.ownerDocument.getSelection()?.removeAllRanges()
+    editor.commands.setNodeSelection(position)
+    changed()
   }, { signal, capture: true })
 
   editorMount.addEventListener('click', (event) => {
