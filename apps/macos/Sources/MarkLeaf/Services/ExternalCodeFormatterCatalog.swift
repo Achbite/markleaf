@@ -462,7 +462,16 @@ enum ExternalCodeFormatterCatalog {
         }
 
         let directories = environment["PATH"]?.split(separator: ":").map(String.init) ?? []
-        for directory in directories {
+        // GUI 进程的 PATH 只有系统目录，常见的手动安装位置作为通用回退追加：
+        // ~/.local/bin 收纳 uv/cargo/用户脚本，/Library/TeX/texbin 是 MacTeX 的
+        // latexindent 所在（shell 经 PATHS 文件可见，GUI 不可见）。
+        var fallbackDirectories = directories
+        for universalRoot in ["\(NSHomeDirectory())/.local/bin", "/Library/TeX/texbin"] {
+            if !fallbackDirectories.contains(universalRoot) {
+                fallbackDirectories.append(universalRoot)
+            }
+        }
+        for directory in fallbackDirectories {
             let candidate = URL(fileURLWithPath: directory, isDirectory: true)
                 .appendingPathComponent(name).path
             if fileManager.isExecutableFile(atPath: candidate) {
