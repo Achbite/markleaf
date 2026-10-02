@@ -470,6 +470,19 @@ enum ExternalCodeFormatterCatalog {
             }
         }
 
+        // GUI 应用不继承 shell 的 PATH，pip 装进 python.org 框架或用户目录的
+        // 工具（如 black）必须按版本枚举这两个安装根。
+        for root in ["/Library/Frameworks/Python.framework/Versions", "\(NSHomeDirectory())/Library/Python"] {
+            guard let versions = try? fileManager.contentsOfDirectory(atPath: root) else { continue }
+            // 版本目录按降序取最新；目录名形如 3.14 / 3.14-arm64。
+            for version in versions.sorted(by: >) {
+                let candidate = "\(root)/\(version)/bin/\(name)"
+                if fileManager.isExecutableFile(atPath: candidate) {
+                    return candidate
+                }
+            }
+        }
+
         for candidate in fallbackExecutablePaths[name] ?? [] where fileManager.isExecutableFile(atPath: candidate) {
             return candidate
         }
@@ -477,6 +490,11 @@ enum ExternalCodeFormatterCatalog {
     }
 
     private static let fallbackExecutablePaths: [String: [String]] = [
+        "black": [
+            "/opt/homebrew/bin/black",
+            "/usr/local/bin/black",
+            "\(NSHomeDirectory())/.local/bin/black",
+        ],
         "clang-format": [
             "/usr/bin/clang-format",
             "/Library/Developer/CommandLineTools/usr/bin/clang-format",
