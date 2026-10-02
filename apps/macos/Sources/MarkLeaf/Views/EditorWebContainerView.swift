@@ -211,6 +211,11 @@ final class EditorWebContainerView: NSView, WKNavigationDelegate {
     private weak var session: EditorSession?
     private var didFinishLoadOnce = false
     private var reloadCoverView: NSView?
+    /// WebView 之下的主题色垫层。WKWebView 关闭 drawsBackground 后，内部
+    /// scroll view 在局部重绘（如点击原子节点触发的同步失效）时会让未
+    /// 重绘区域透出宿主窗口下层内容（壁纸/其它视图），表现为跨段深色伪影。
+    /// 垫一层主题色后，任何脏区透出的都是文档底色。
+    private var themedBackingView: NSView?
     private(set) var hasThemedFrame = false
 
     init(session: EditorSession) {
@@ -248,12 +253,24 @@ final class EditorWebContainerView: NSView, WKNavigationDelegate {
         webView.translatesAutoresizingMaskIntoConstraints = false
         webView.navigationDelegate = self
         webView.allowsMagnification = false
+
+        let backing = NSView()
+        backing.translatesAutoresizingMaskIntoConstraints = false
+        backing.wantsLayer = true
+        backing.layer?.backgroundColor = initialBackground.cgColor
+        addSubview(backing, positioned: .below, relativeTo: nil)
+        themedBackingView = backing
+
         addSubview(webView)
         NSLayoutConstraint.activate([
             webView.leadingAnchor.constraint(equalTo: leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: trailingAnchor),
             webView.topAnchor.constraint(equalTo: topAnchor),
             webView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            backing.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backing.trailingAnchor.constraint(equalTo: trailingAnchor),
+            backing.topAnchor.constraint(equalTo: topAnchor),
+            backing.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
 
         // 深色模式防白闪：前端就绪前保持隐藏，露出系统/主题背景（对齐 Windows 1.1.3）。
@@ -400,6 +417,8 @@ final class EditorWebContainerView: NSView, WKNavigationDelegate {
         layer?.backgroundColor = target.cgColor
         reloadCoverView?.wantsLayer = true
         reloadCoverView?.layer?.backgroundColor = target.cgColor
+        themedBackingView?.wantsLayer = true
+        themedBackingView?.layer?.backgroundColor = target.cgColor
         webView.underPageBackgroundColor = target
         webView.window?.backgroundColor = target
         let startedAt = Date()
