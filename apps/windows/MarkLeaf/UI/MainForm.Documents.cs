@@ -622,6 +622,19 @@ internal sealed partial class MainForm
 
     private void ClearHistory()
     {
+        // 清除历史是不可恢复的删除操作：先确认再执行（与 macOS 1.7.7 行为一致）。
+        var choice = ShowMessage(
+            this,
+            Loc.Get("dialog.clearHistoryConfirm") + "\r\n\r\n" + Loc.Get("dialog.clearHistoryConfirmDetail"),
+            "MarkLeaf",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning,
+            MessageBoxDefaultButton.Button2);
+        if (choice != DialogResult.Yes)
+        {
+            return;
+        }
+
         _settings.Workspace.RecentFiles.Clear();
         _settings.Workspace.RecentFolders.Clear();
         _menuService.RefreshStates();

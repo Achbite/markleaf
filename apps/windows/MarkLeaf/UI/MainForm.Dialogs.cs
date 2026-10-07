@@ -1256,15 +1256,13 @@ internal sealed partial class MainForm
             case RecoveryChoice.Restore when dialog.SelectedSnapshot is not null:
                 SaveAndOpenRecovery(dialog.SelectedSnapshot);
                 break;
+            case RecoveryChoice.Open when dialog.SelectedSnapshot is not null:
+                OpenRecoverySnapshot(dialog.SelectedSnapshot);
+                break;
             case RecoveryChoice.Discard:
                 foreach (var snapshot in pending)
                 {
-                    foreach (var file in Directory.GetFiles(
-                        _paths.RecoveryDirectory,
-                        $"doc-*-{snapshot.DocumentId:N}.*"))
-                    {
-                        try { File.Delete(file); } catch { }
-                    }
+                    RecoveryService.DeletePending(_paths.RecoveryDirectory, snapshot.DocumentId, _logger);
                 }
                 break;
         }
@@ -1292,16 +1290,10 @@ internal sealed partial class MainForm
             var targetPath = dialog.FileName;
             await File.WriteAllTextAsync(targetPath, recovery.Markdown, System.Text.Encoding.UTF8);
 
-            foreach (var file in Directory.GetFiles(
-                _paths.RecoveryDirectory,
-                $"doc-*-{recovery.DocumentId:N}.*"))
-            {
-                try { File.Delete(file); } catch { }
-            }
-
             StopWatchingDocument();
             var opened = await _documentFileService.OpenAsync(targetPath);
             await AddAndActivateDocumentAsync(opened);
+            RecoveryService.DeletePending(_paths.RecoveryDirectory, recovery.DocumentId, _logger);
             _logger.Info($"Recovery snapshot saved and opened: {targetPath}.");
             SetStatus(Loc.Get("status.recoveredUnsaved"));
         }
@@ -1318,6 +1310,53 @@ internal sealed partial class MainForm
         {
             _documentOperationInProgress = false;
         }
+    }
+
+    /// <summary>
+    /// 直接打开恢复快照继续编辑（macOS 1.7.7 恢复窗口的“打开”动作）：快照内容以
+    /// 脏文档载入；原文件仍存在时沿用磁盘指纹与编码，使首次保存与常规保存一致，
+    /// 若磁盘内容在崩溃后被其它程序改动，则照常进入外部变更确认后再覆盖。
+    /// </summary>
+    private async void OpenRecoverySnapshot(RecoverySnapshot recovery)
+    {
+        var document = await LoadRecoveryDocumentAsync(recovery);
+        document.Markdown = recovery.Markdown;
+        document.Revision = recovery.Revision;
+        document.IsDirty = true;
+        // 同路径标签页已存在时强制新开标签页承载快照内容，
+        // 避免按去重规则切换到旧标签页而丢失恢复内容。
+        var duplicateExists = document.FilePath is not null
+            && _openDocuments.Any(item => item.FilePath is not null
+                && PathEquals(item.FilePath, document.FilePath));
+        await AddAndActivateDocumentAsync(document, forceNewTab: duplicateExists);
+        RecoveryService.DeletePending(_paths.RecoveryDirectory, recovery.DocumentId, _logger);
+        _logger.Info($"Recovery snapshot opened for editing: {recovery.DocumentId}.");
+        SetStatus(Loc.Get("status.recoveredUnsaved"));
+    }
+
+    private async Task<MarkdownDocument> LoadRecoveryDocumentAsync(RecoverySnapshot recovery)
+    {
+        if (recovery.DocumentPath is not null && File.Exists(recovery.DocumentPath))
+        {
+            try
+            {
+                return await _documentFileService.OpenAsync(recovery.DocumentPath);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                _logger.Warning(
+                    $"Recovery original file unreadable, falling back to a new document: {exception.Message}");
+            }
+        }
+
+        var document = _documentFileService.CreateNew(
+            DefaultNewLine,
+            recovery.DocumentPath is null
+                ? NewDocumentKind.Markdown
+                : NewDocumentKindExtensions.FromExtension(Path.GetExtension(recovery.DocumentPath)),
+            DocumentEncodingPolicy.FromId(_settings.File.DefaultEncoding));
+        document.FilePath = recovery.DocumentPath;
+        return document;
     }
 
     private void ShowDocumentStatisticsDialog()

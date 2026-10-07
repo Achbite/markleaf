@@ -69,6 +69,7 @@ internal sealed class PreferencesDialog : Form
     private readonly RadioButton _unsafeEmphasisAutoConvertRadio;
     private readonly CheckBox _exitBlockOnEmptyEnterCheck;
     private readonly CheckBox _useShiftEnterHardBreakCheck;
+    private readonly CheckBox _codeBlockSpellcheckCheck;
     private readonly ComboBox _markdownCodeFenceCombo = new()
     { DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly ComboBox _markdownEmphasisMarkerCombo = new()
@@ -287,6 +288,8 @@ internal sealed class PreferencesDialog : Form
         { Text = Loc.Get("prefs.editor.exitBlockOnEmptyEnter"), AutoSize = true, FlatStyle = FlatStyle.System };
         _useShiftEnterHardBreakCheck = new CheckBox
         { Text = Loc.Get("prefs.editor.useShiftEnterHardBreak"), AutoSize = true, FlatStyle = FlatStyle.System };
+        _codeBlockSpellcheckCheck = new CheckBox
+        { Text = Loc.Get("prefs.editor.codeBlockSpellcheck"), AutoSize = true, FlatStyle = FlatStyle.System };
         _markdownCodeFenceCombo.Items.Add(Loc.Get("prefs.editor.markdown.codeFence.backtick"));
         _markdownCodeFenceCombo.Items.Add(Loc.Get("prefs.editor.markdown.codeFence.tilde"));
         _markdownEmphasisMarkerCombo.Items.Add(Loc.Get("prefs.editor.markdown.emphasis.asterisk"));
@@ -732,6 +735,8 @@ internal sealed class PreferencesDialog : Form
         panel.Controls.Add(_useShiftEnterHardBreakCheck, 0, 2);
         panel.Controls.Add(Gap(), 0, 3);
         panel.Controls.Add(_showParagraphBlockHandleCheck, 0, 4);
+        panel.Controls.Add(Gap(), 0, 5);
+        panel.Controls.Add(_codeBlockSpellcheckCheck, 0, 6);
         return panel;
     }
 
@@ -1316,6 +1321,7 @@ internal sealed class PreferencesDialog : Form
         _escapeMarkdownLiteralSymbolsCheck.Checked = editor.EscapeMarkdownLiteralSymbols;
         _exitBlockOnEmptyEnterCheck.Checked = editor.ExitBlockOnEmptyEnter;
         _useShiftEnterHardBreakCheck.Checked = editor.UseShiftEnterHardBreak;
+        _codeBlockSpellcheckCheck.Checked = editor.CodeBlockSpellcheck;
         _unsafeEmphasisPromptRadio.Checked = editor.UnsafeEmphasisPreference is null;
         _unsafeEmphasisLiteralRadio.Checked = editor.UnsafeEmphasisPreference == "literal";
         _unsafeEmphasisAutoConvertRadio.Checked = editor.UnsafeEmphasisPreference == "html";
@@ -1472,6 +1478,7 @@ internal sealed class PreferencesDialog : Form
         editor.EscapeMarkdownLiteralSymbols = _escapeMarkdownLiteralSymbolsCheck.Checked;
         editor.ExitBlockOnEmptyEnter = _exitBlockOnEmptyEnterCheck.Checked;
         editor.UseShiftEnterHardBreak = _useShiftEnterHardBreakCheck.Checked;
+        editor.CodeBlockSpellcheck = _codeBlockSpellcheckCheck.Checked;
         editor.UnsafeEmphasisPreference = _unsafeEmphasisAutoConvertRadio.Checked
             ? "html"
             : _unsafeEmphasisLiteralRadio.Checked ? "literal" : null;

@@ -74,6 +74,30 @@ internal sealed class RecoveryService : IDisposable
         }
     }
 
+    /// <summary>
+    /// 删除任意进程留下的指定文档恢复文件（崩溃进程的快照带有其它 PID 前缀），
+    /// 对应 macOS RecoveryService.delete(documentId:)。
+    /// </summary>
+    public static void DeletePending(string recoveryDirectory, Guid documentId, IAppLogger logger)
+    {
+        try
+        {
+            if (!Directory.Exists(recoveryDirectory))
+            {
+                return;
+            }
+
+            foreach (var file in Directory.GetFiles(recoveryDirectory, $"doc-*-{documentId:N}.*"))
+            {
+                try { File.Delete(file); } catch { }
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            logger.Warning($"Could not delete pending recovery for {documentId}: {exception.Message}");
+        }
+    }
+
     public void DeleteOwnFiles()
     {
         try

@@ -306,6 +306,9 @@ public sealed class EditorSettings
 
     public string MarkdownBulletMarker { get; set; } = "dash";
 
+    /// <summary>代码块拼写检查，默认关闭，与 macOS 1.7.7 行为一致。</summary>
+    public bool CodeBlockSpellcheck { get; set; }
+
     public int SourceIndentWidth { get; set; } = 2;
 
     public bool ShowParagraphBlockHandle { get; set; } = true;

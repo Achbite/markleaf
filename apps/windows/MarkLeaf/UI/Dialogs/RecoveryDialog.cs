@@ -4,7 +4,7 @@ using MarkLeaf.UI.Controls;
 
 namespace MarkLeaf.UI.Dialogs;
 
-internal enum RecoveryChoice { Restore, Discard, Cancel }
+internal enum RecoveryChoice { Restore, Open, Discard, Cancel }
 
 internal sealed class RecoveryDialog : Form
 {
@@ -117,8 +117,26 @@ internal sealed class RecoveryDialog : Form
         };
         restoreButton.Enabled = recoveries.Count > 0;
 
+        // 1.7.7：直接打开快照继续编辑，无需先另存为（对应 macOS 恢复窗口“打开”）。
+        var openButton = new Button
+        {
+            Text = Loc.Get("dialog.recoveryOpen"),
+            AutoSize = true,
+            MinimumSize = new Size(this.ScaleForDpi(74), 0),
+            Padding = new Padding(this.ScaleForDpi(7), this.ScaleForDpi(2), this.ScaleForDpi(7), this.ScaleForDpi(2)),
+            FlatStyle = FlatStyle.System,
+            UseVisualStyleBackColor = true,
+        };
+        openButton.Click += (_, _) =>
+        {
+            Choice = RecoveryChoice.Open;
+            Close();
+        };
+        openButton.Enabled = recoveries.Count > 0;
+
         buttonPanel.Controls.Add(discardButton);
         buttonPanel.Controls.Add(restoreButton);
+        buttonPanel.Controls.Add(openButton);
 
         var layout = new TableLayoutPanel
         {

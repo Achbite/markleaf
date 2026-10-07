@@ -401,7 +401,14 @@ internal sealed class EditorHostController : IDisposable
 
     public void ApplyMarkdownEditingSettings(EditorSettings settings)
     {
-        var payload = JsonSerializer.Serialize(new
+        var payload = BuildMarkdownEditingSettingsPayload(settings);
+        EnqueueOrRun(() => Post("command", new { command = "setMarkdownEditingSettings", text = payload }));
+    }
+
+    /// <summary>构造 setMarkdownEditingSettings 载荷；键名与 editor-core 的共享契约一致。</summary>
+    internal static string BuildMarkdownEditingSettingsPayload(EditorSettings settings)
+    {
+        return JsonSerializer.Serialize(new
         {
             exitBlockOnEmptyEnter = settings.ExitBlockOnEmptyEnter,
             useShiftEnterHardBreak = settings.UseShiftEnterHardBreak,
@@ -410,8 +417,8 @@ internal sealed class EditorHostController : IDisposable
             bulletMarker = settings.MarkdownBulletMarker,
             escapeLiteralSymbols = settings.EscapeLiteralSymbols,
             escapeMarkdownLiteralSymbols = settings.EscapeMarkdownLiteralSymbols,
+            codeBlockSpellcheck = settings.CodeBlockSpellcheck,
         });
-        EnqueueOrRun(() => Post("command", new { command = "setMarkdownEditingSettings", text = payload }));
     }
 
     /// <summary>
