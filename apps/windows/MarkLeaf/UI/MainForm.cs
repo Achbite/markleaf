@@ -64,6 +64,7 @@ internal sealed partial class MainForm : Form
     private FileSystemWatcher? _workspaceWatcher;
     private readonly RecoveryService _recoveryService;
     private readonly Services.CodeFormatting.ExternalCodeFormatterService _codeFormatterService;
+    private HashSet<string>? _lastFormatterLanguages;
     private readonly System.Windows.Forms.Timer _recoveryTimer = new() { Interval = 30_000 };
     private readonly System.Windows.Forms.Timer _autoSaveTimer = new() { Interval = 500 };
     private readonly System.Windows.Forms.Timer _statusMessageTimer = new() { Interval = 5_000 };

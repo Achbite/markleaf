@@ -999,5 +999,10 @@
   "prefs.editor.markdown.codeFormatter.manage": "フォーマッターを管理…",
   "menu.format.formatCodeBlock": "コードブロックを整形(&O)",
   "contextMenu.code.formatBlock": "コードを整形(&O)",
-  "shortcut.formatCodeBlock": "コードブロックを整形"
+  "shortcut.formatCodeBlock": "コードブロックを整形",
+  "codeFormatter.probe": "検出",
+  "codeFormatter.probing": "検出中…",
+  "codeFormatter.probeSucceeded": "検出成功：{0}",
+  "codeFormatter.probeFailed": "検出失敗：{0}",
+  "codeFormatter.newToolsDetected": "新しいフォーマッターを検出しました。対応言語は直ちに利用でき、エディターの再起動は不要です。"
 }

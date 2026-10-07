@@ -9,6 +9,8 @@ public sealed record CodeFormatterOutcome(
     string? FormattedCode,
     string? ErrorMessage);
 
+public sealed record CodeFormatterProbeResult(bool Success, string Detail);
+
 /// <summary>
 /// 执行外部代码格式化器：代码经 stdin 传入（UTF-8 无 BOM），退出码 0 视为
 /// 成功并回传 stdout。整体超时 15 秒，与编辑器侧的 formatter 等待上限一致。
@@ -48,17 +50,10 @@ public sealed class ExternalCodeFormatterService
             arguments.Insert(0, $"{prefix}{from}:{to}");
         }
 
-        var isJar = toolPath.EndsWith(".jar", StringComparison.OrdinalIgnoreCase);
-        var fileName = isJar ? ResolveJavaExecutable() : toolPath;
-        if (string.IsNullOrEmpty(fileName) || (!isJar && !File.Exists(fileName)))
+        var launch = BuildLaunch(toolPath, arguments);
+        if (launch is null)
         {
-            return new CodeFormatterOutcome(false, null, toolPath);
-        }
-
-        if (isJar)
-        {
-            arguments.Insert(0, toolPath);
-            arguments.Insert(0, "-jar");
+            return new CodeFormatterOutcome(false, null, RuntimeMissingMessage(toolPath));
         }
 
         try
@@ -67,8 +62,8 @@ public sealed class ExternalCodeFormatterService
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = fileName,
-                    Arguments = QuoteArguments(arguments),
+                    FileName = launch.Value.FileName,
+                    Arguments = launch.Value.Arguments,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardInput = true,
@@ -124,12 +119,111 @@ public sealed class ExternalCodeFormatterService
         }
     }
 
+    /// <summary>仅探测当前选中的格式化器，不在窗口打开时批量启动所有工具。</summary>
+    public static CodeFormatterProbeResult Probe(
+        ExternalCodeFormatterTool tool,
+        string toolPath,
+        CancellationToken cancellationToken = default)
+    {
+        var launch = BuildLaunch(toolPath, tool.ProbeArguments);
+        if (launch is null)
+        {
+            return new CodeFormatterProbeResult(false, RuntimeMissingMessage(toolPath));
+        }
+
+        try
+        {
+            using var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = launch.Value.FileName,
+                    Arguments = launch.Value.Arguments,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    StandardOutputEncoding = new UTF8Encoding(false),
+                    StandardErrorEncoding = new UTF8Encoding(false),
+                },
+            };
+            if (!process.Start())
+            {
+                return new CodeFormatterProbeResult(false, "process start failed");
+            }
+
+            var output = process.StandardOutput.ReadToEndAsync(cancellationToken);
+            var error = process.StandardError.ReadToEndAsync(cancellationToken);
+            if (!process.WaitForExit(3000))
+            {
+                try { process.Kill(entireProcessTree: true); } catch { }
+                return new CodeFormatterProbeResult(false, "probe timed out");
+            }
+
+            Task.WaitAll([output, error], CancellationToken.None);
+            var detail = FirstLine(process.ExitCode == 0 ? output.Result : error.Result);
+            return process.ExitCode == 0
+                ? new CodeFormatterProbeResult(true, string.IsNullOrWhiteSpace(detail) ? "available" : detail)
+                : new CodeFormatterProbeResult(false, string.IsNullOrWhiteSpace(detail) ? $"exit code {process.ExitCode}" : detail);
+        }
+        catch (Exception exception) when (
+            exception is IOException
+                or System.ComponentModel.Win32Exception
+                or InvalidOperationException
+                or UnauthorizedAccessException)
+        {
+            return new CodeFormatterProbeResult(false, exception.Message);
+        }
+    }
+
     public static string FirstLine(string text)
     {
         var span = text.AsSpan().Trim();
         var newline = span.IndexOfAny('\r', '\n');
         return newline < 0 ? span.ToString() : span[..newline].Trim().ToString();
     }
+
+    private static (string FileName, string Arguments)? BuildLaunch(
+        string toolPath,
+        IReadOnlyList<string> arguments)
+    {
+        if (!File.Exists(toolPath))
+        {
+            return null;
+        }
+
+        if (toolPath.EndsWith(".jar", StringComparison.OrdinalIgnoreCase))
+        {
+            var java = ResolveRuntimeExecutable("java.exe");
+            return java is null
+                ? null
+                : (java, QuoteArguments(["-jar", toolPath, .. arguments]));
+        }
+
+        if (toolPath.EndsWith(".pl", StringComparison.OrdinalIgnoreCase))
+        {
+            var perl = ResolveRuntimeExecutable("perl.exe");
+            return perl is null
+                ? null
+                : (perl, QuoteArguments([toolPath, .. arguments]));
+        }
+
+        if (toolPath.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)
+            || toolPath.EndsWith(".bat", StringComparison.OrdinalIgnoreCase))
+        {
+            var commandShell = Environment.GetEnvironmentVariable("ComSpec") ?? "cmd.exe";
+            return (commandShell, QuoteArguments(["/d", "/c", QuoteArguments([toolPath, .. arguments])]));
+        }
+
+        return (toolPath, QuoteArguments(arguments));
+    }
+
+    private static string RuntimeMissingMessage(string toolPath) =>
+        toolPath.EndsWith(".jar", StringComparison.OrdinalIgnoreCase)
+            ? "java runtime not found"
+            : toolPath.EndsWith(".pl", StringComparison.OrdinalIgnoreCase)
+                ? "perl runtime not found"
+                : "process start failed";
 
     private static string QuoteArguments(IReadOnlyList<string> arguments)
     {
@@ -147,12 +241,15 @@ public sealed class ExternalCodeFormatterService
             }));
     }
 
-    private static string? ResolveJavaExecutable()
+    private static string? ResolveRuntimeExecutable(string executableName)
     {
-        var javaHome = Environment.GetEnvironmentVariable("JAVA_HOME");
-        if (!string.IsNullOrWhiteSpace(javaHome))
+        var runtimeHomeVariable = executableName.Equals("java.exe", StringComparison.OrdinalIgnoreCase)
+            ? "JAVA_HOME"
+            : "PERL_HOME";
+        var runtimeHome = Environment.GetEnvironmentVariable(runtimeHomeVariable);
+        if (!string.IsNullOrWhiteSpace(runtimeHome))
         {
-            var candidate = Path.Combine(javaHome, "bin", "java.exe");
+            var candidate = Path.Combine(runtimeHome, "bin", executableName);
             if (File.Exists(candidate))
             {
                 return candidate;
@@ -171,7 +268,7 @@ public sealed class ExternalCodeFormatterService
                     continue;
                 }
 
-                var candidate = Path.Combine(directory, "java.exe");
+                var candidate = Path.Combine(directory, executableName);
                 if (File.Exists(candidate))
                 {
                     return candidate;
@@ -179,6 +276,19 @@ public sealed class ExternalCodeFormatterService
             }
             catch (ArgumentException)
             {
+            }
+        }
+
+        if (executableName.Equals("perl.exe", StringComparison.OrdinalIgnoreCase))
+        {
+            foreach (var directory in new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Strawberry", "perl", "bin"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Strawberry", "perl", "bin"),
+            })
+            {
+                var candidate = Path.Combine(directory, executableName);
+                if (File.Exists(candidate)) return candidate;
             }
         }
 

@@ -999,5 +999,10 @@
   "prefs.editor.markdown.codeFormatter.manage": "Manage formatters…",
   "menu.format.formatCodeBlock": "Format Code Block(&O)",
   "contextMenu.code.formatBlock": "Format Code(&O)",
-  "shortcut.formatCodeBlock": "Format code block"
+  "shortcut.formatCodeBlock": "Format code block",
+  "codeFormatter.probe": "Probe",
+  "codeFormatter.probing": "Probing…",
+  "codeFormatter.probeSucceeded": "Probe passed: {0}",
+  "codeFormatter.probeFailed": "Probe failed: {0}",
+  "codeFormatter.newToolsDetected": "New formatters were detected. Their languages are available immediately; no editor restart is needed."
 }

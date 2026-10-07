@@ -999,5 +999,10 @@
   "prefs.editor.markdown.codeFormatter.manage": "管理格式化器…",
   "menu.format.formatCodeBlock": "格式化程式碼區塊(&O)",
   "contextMenu.code.formatBlock": "格式化程式碼(&O)",
-  "shortcut.formatCodeBlock": "格式化程式碼區塊"
+  "shortcut.formatCodeBlock": "格式化程式碼區塊",
+  "codeFormatter.probe": "探測",
+  "codeFormatter.probing": "正在探測…",
+  "codeFormatter.probeSucceeded": "探測通過：{0}",
+  "codeFormatter.probeFailed": "探測失敗：{0}",
+  "codeFormatter.newToolsDetected": "已偵測到新的格式化器，相關語言已立即可用，無需重新啟動編輯器。"
 }

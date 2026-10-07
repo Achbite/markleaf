@@ -21,6 +21,7 @@ internal sealed class CodeFormatterSettingsDialog : Form
     private readonly Button _browseButton = new();
     private readonly Button _clearButton = new();
     private readonly LinkLabel _websiteLink = new();
+    private readonly Button _probeButton = new();
     private readonly Label _statusLabel = new();
 
     public CodeFormatterSettingsDialog(CodeFormatterSettings settings, Action onChanged)
@@ -132,6 +133,11 @@ internal sealed class CodeFormatterSettingsDialog : Form
         _websiteLink.Visible = false;
         _websiteLink.Click += (_, _) => OpenSelectedToolWebsite();
         pathRow.Controls.Add(_websiteLink, 3, 0);
+
+        _probeButton.Text = Loc.Get("codeFormatter.probe");
+        _probeButton.AutoSize = true;
+        _probeButton.Click += async (_, _) => await ProbeSelectedToolAsync();
+        pathRow.Controls.Add(_probeButton, 4, 0);
         layout.Controls.Add(pathRow, 0, 2);
         layout.SetColumnSpan(pathRow, 2);
 
@@ -212,6 +218,31 @@ internal sealed class CodeFormatterSettingsDialog : Form
                 ?? string.Empty;
         _websiteLink.Visible = ExternalCodeFormatterCatalog.ProbeAvailability(tool, _settings.ToolPaths)
             != ExternalCodeFormatterAvailability.Available;
+        _probeButton.Enabled = ExternalCodeFormatterCatalog.ResolveExecutable(tool, _settings.ToolPaths) is not null;
+    }
+
+    /// <summary>仅探测当前选中的格式化器，验证版本命令可运行。</summary>
+    private async Task ProbeSelectedToolAsync()
+    {
+        if (SelectedTool() is not { } tool)
+        {
+            return;
+        }
+
+        var path = ExternalCodeFormatterCatalog.ResolveExecutable(tool, _settings.ToolPaths);
+        if (path is null)
+        {
+            _statusLabel.Text = Loc.Get("codeFormatter.status.notInstalled");
+            return;
+        }
+
+        _probeButton.Enabled = false;
+        _statusLabel.Text = Loc.Get("codeFormatter.probing");
+        var result = await Task.Run(() => ExternalCodeFormatterService.Probe(tool, path));
+        _statusLabel.Text = result.Success
+            ? Loc.Format("codeFormatter.probeSucceeded", result.Detail)
+            : Loc.Format("codeFormatter.probeFailed", result.Detail);
+        _probeButton.Enabled = true;
     }
 
     /// <summary>打开当前选中工具的官网（未安装/路径无效时链接可见），与 macOS 契约一致。</summary>

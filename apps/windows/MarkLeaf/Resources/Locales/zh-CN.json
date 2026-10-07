@@ -1002,5 +1002,10 @@
   "prefs.editor.markdown.codeFormatter.manage": "管理格式化器…",
   "menu.format.formatCodeBlock": "格式化代码块(&O)",
   "contextMenu.code.formatBlock": "格式化代码(&O)",
-  "shortcut.formatCodeBlock": "格式化代码块"
+  "shortcut.formatCodeBlock": "格式化代码块",
+  "codeFormatter.probe": "探测",
+  "codeFormatter.probing": "正在探测…",
+  "codeFormatter.probeSucceeded": "探测通过：{0}",
+  "codeFormatter.probeFailed": "探测失败：{0}",
+  "codeFormatter.newToolsDetected": "已检测到新的格式化器，相关语言已立即可用，无需重启编辑器。"
 }

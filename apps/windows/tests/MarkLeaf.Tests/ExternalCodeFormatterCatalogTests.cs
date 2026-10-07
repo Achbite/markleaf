@@ -102,6 +102,25 @@ public sealed class ExternalCodeFormatterCatalogTests
             "https://taplo.tamasfe.dev/",
             ExternalCodeFormatterCatalog.ToolForLanguage("toml")!.HomepageUrl);
     }
+
+    [TestMethod]
+    public void Probe_RunsOnlyTheSelectedTool()
+    {
+        var tool = ExternalCodeFormatterCatalog.ToolForLanguage("java")!;
+        var customPath = Path.Combine(Path.GetTempPath(), $"markleaf-probe-{Guid.NewGuid():N}.cmd");
+        File.WriteAllText(customPath, "@echo off\r\necho fake-java-format 1.0\r\n");
+        try
+        {
+            var result = ExternalCodeFormatterService.Probe(tool, customPath);
+
+            Assert.IsTrue(result.Success, result.Detail);
+            StringAssert.Contains(result.Detail, "fake-java-format");
+        }
+        finally
+        {
+            File.Delete(customPath);
+        }
+    }
 }
 
 [TestClass]

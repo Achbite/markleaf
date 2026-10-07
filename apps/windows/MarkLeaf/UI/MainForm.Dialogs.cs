@@ -6,6 +6,7 @@ using MarkLeaf.Commands;
 using MarkLeaf.Documents;
 using MarkLeaf.Editor;
 using MarkLeaf.Services;
+using MarkLeaf.Services.CodeFormatting;
 using MarkLeaf.Services.ExternalLinks;
 using MarkLeaf.Services.Recovery;
 using MarkLeaf.Services.Settings;
@@ -94,6 +95,22 @@ internal sealed partial class MainForm
     /// </summary>
     private void ShowCodeFormatterManager()
     {
+        // GUI 应用收不到终端新装工具的事件：打开管理器前重新探测一次，
+        // 若出现新工具立即下发并提醒（对应 macOS 的同款契约）。
+        var before = _lastFormatterLanguages is not null
+            ? new HashSet<string>(_lastFormatterLanguages, StringComparer.OrdinalIgnoreCase)
+            : new HashSet<string>(ExternalCodeFormatterCatalog.AvailableLanguages(_settings.CodeFormatter.ToolPaths), StringComparer.OrdinalIgnoreCase);
+        ApplyCodeFormatterSettings();
+        if (_lastFormatterLanguages is not null
+            && _lastFormatterLanguages.Except(before, StringComparer.OrdinalIgnoreCase).Any())
+        {
+            ShowMessage(
+                this,
+                Loc.Get("codeFormatter.newToolsDetected"),
+                Loc.Get("codeFormatter.dialogTitle"),
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
         using var dialog = new CodeFormatterSettingsDialog(_settings.CodeFormatter, () =>
         {
             ApplyCodeFormatterSettings();

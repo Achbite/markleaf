@@ -126,8 +126,12 @@ public static class ExternalCodeFormatterCatalog
                     return candidate;
                 }
 
-                // 包管理器在 Windows 上的 shim 通常是 .exe/.cmd/.bat。
-                foreach (var extension in new[] { ".exe", ".cmd", ".bat" })
+                // 包管理器在 Windows 上的 shim 通常是 .exe/.cmd/.bat；
+                // latexindent 以 perl 脚本分发，额外探测 .pl。
+                var extensions = tool.Id == "latexindent"
+                    ? new[] { ".exe", ".cmd", ".bat", ".pl" }
+                    : new[] { ".exe", ".cmd", ".bat" };
+                foreach (var extension in extensions)
                 {
                     candidate = Path.Combine(directory, tool.ExecutableName + extension);
                     if (File.Exists(candidate))

@@ -63,11 +63,11 @@ internal sealed partial class MainForm
         if (!outcome.Success)
         {
             var reason = DescribeFormatterError(outcome.ErrorMessage);
+            _logger.Warning($"External code formatting failed for '{toolId}': {reason}");
             _editorHost?.SendCodeFormatResult(
                 request.RequestId, CodeFormatStatus.Failed, message: reason);
-            // 状态栏透出格式化器的原始诊断（如 black 的 Cannot parse 行:列），
-            // 笼统的"失败"无法帮助用户定位语法问题。
-            SetStatus(reason);
+            // 详细诊断留在日志和编辑器错误结果中，状态栏保持简洁。
+            SetStatus(Loc.Get("codeFormatter.failed"));
             return;
         }
 
@@ -130,7 +130,8 @@ internal sealed partial class MainForm
     /// </summary>
     private void ApplyCodeFormatterSettings()
     {
-        _editorHost?.SetCodeFormatterSettings(
-            ExternalCodeFormatterCatalog.AvailableLanguages(_settings.CodeFormatter.ToolPaths));
+        var languages = ExternalCodeFormatterCatalog.AvailableLanguages(_settings.CodeFormatter.ToolPaths);
+        _lastFormatterLanguages = new HashSet<string>(languages, StringComparer.OrdinalIgnoreCase);
+        _editorHost?.SetCodeFormatterSettings(languages);
     }
 }
