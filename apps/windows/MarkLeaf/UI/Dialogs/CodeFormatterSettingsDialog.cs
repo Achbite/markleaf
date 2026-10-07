@@ -203,7 +203,13 @@ internal sealed class CodeFormatterSettingsDialog : Form
 
         _browseButton.Enabled = true;
         _clearButton.Enabled = _settings.ToolPaths.ContainsKey(tool.Id);
-        _pathTextBox.Text = _settings.ToolPaths.TryGetValue(tool.Id, out var path) ? path : string.Empty;
+        // 与 macOS 一致：地址栏展示实际生效的可执行文件位置——设置了自定义路径
+        // 用自定义路径，否则显示探测解析到的安装位置；未安装保持占位提示。
+        _pathTextBox.Text = _settings.ToolPaths.TryGetValue(tool.Id, out var path)
+            && !string.IsNullOrWhiteSpace(path)
+            ? path
+            : ExternalCodeFormatterCatalog.ResolveExecutable(tool, _settings.ToolPaths)
+                ?? string.Empty;
         _websiteLink.Visible = ExternalCodeFormatterCatalog.ProbeAvailability(tool, _settings.ToolPaths)
             != ExternalCodeFormatterAvailability.Available;
     }
