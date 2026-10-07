@@ -128,10 +128,10 @@ internal sealed class WorkspaceTreeView : Control
         var previousSelectedFont = _selectedTreeFont;
         var previousIconFont = _iconFont;
         var previousArrowFont = _arrowFont;
-        _treeFont = new Font("Microsoft YaHei UI", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
-        _selectedTreeFont = new Font("Microsoft YaHei UI", 9.5F, FontStyle.Bold, GraphicsUnit.Point);
-        _iconFont = new Font(SystemIconProvider.IconFontName, 10.5F, FontStyle.Regular, GraphicsUnit.Point);
-        _arrowFont = new Font(SystemIconProvider.IconFontName, 8F, FontStyle.Regular, GraphicsUnit.Point);
+        _treeFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(9.5F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _selectedTreeFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(9.5F, dpi), FontStyle.Bold, GraphicsUnit.Pixel);
+        _iconFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(10.5F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _arrowFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(8F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
         _rowHeight = (int)Math.Ceiling(_treeFont.GetHeight(dpi) * 1.75F);
         previousFont.Dispose();
         previousSelectedFont.Dispose();

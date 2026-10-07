@@ -124,11 +124,11 @@ internal sealed class WorkspaceDocumentListView : Control
         var previousDocument = _documentFont;
         var previousPreview = _previewFont;
         var previousFolderIcon = _folderIconFont;
-        _metadataFont = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        _documentFont = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
-        _previewFont = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        _folderIconFont = new Font(SystemIconProvider.IconFontName, 8F, FontStyle.Regular, GraphicsUnit.Point);
-        var verticalPadding = this.ScaleForDpi(18);
+        _metadataFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(9F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _documentFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(10F, dpi), FontStyle.Bold, GraphicsUnit.Pixel);
+        _previewFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(9F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _folderIconFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(8F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        var verticalPadding = SidebarGdi.ScaleForDpi(18, dpi);
         _rowHeight = (int)Math.Ceiling(
             _metadataFont.GetHeight(dpi) + _documentFont.GetHeight(dpi)
             + _previewFont.GetHeight(dpi) + verticalPadding);

@@ -373,16 +373,28 @@ internal sealed partial class MainForm : Form
             }
 
             _logger.Info($"Main window DPI changed: {args.DeviceDpiOld} -> {args.DeviceDpiNew}.");
-            _sidebarTabBar.ConfigureTypography(_effectiveDpi);
-            _sidebarSearchBar.ConfigureTypography(_effectiveDpi);
-            _detachedOutlineTabBar.ConfigureTypography(_effectiveDpi);
-            _detachedOutlineSearchBar.ConfigureTypography(_effectiveDpi);
-            UpdateSidebarHeaderRowHeights();
-            _workspaceTree.ConfigureTypography(_effectiveDpi);
-            _workspaceDocumentList.ConfigureTypography(_effectiveDpi);
-            _outlineTree.ConfigureTypography(_effectiveDpi);
-            _documentTabBar.ConfigureTypography(_effectiveDpi);
-            _searchResultsView.ConfigureTypography(_effectiveDpi);
+            // WinForms 在 WM_DPICHANGED 内先引发本事件、再按新旧 DPI 比例自动
+            // 缩放控件边界；若在此同步重建尺寸，刚设置的值会被框架再乘一次
+            // 比例（实测 144→96 后标签栏高度 35×96/144≈23px，菜单栏塌陷）。
+            // 推迟到消息处理结束后重建，让这里的绝对尺寸最终生效。
+            BeginInvoke(() =>
+            {
+                if (IsDisposed)
+                {
+                    return;
+                }
+
+                _sidebarTabBar.ConfigureTypography(_effectiveDpi);
+                _sidebarSearchBar.ConfigureTypography(_effectiveDpi);
+                _detachedOutlineTabBar.ConfigureTypography(_effectiveDpi);
+                _detachedOutlineSearchBar.ConfigureTypography(_effectiveDpi);
+                UpdateSidebarHeaderRowHeights();
+                _workspaceTree.ConfigureTypography(_effectiveDpi);
+                _workspaceDocumentList.ConfigureTypography(_effectiveDpi);
+                _outlineTree.ConfigureTypography(_effectiveDpi);
+                _documentTabBar.ConfigureTypography(_effectiveDpi);
+                _searchResultsView.ConfigureTypography(_effectiveDpi);
+            });
         };
 
         ResumeLayout(performLayout: false);

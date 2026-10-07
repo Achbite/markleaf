@@ -108,10 +108,10 @@ internal sealed class SidebarSearchBar : Control
     {
         _textFont.Dispose();
         _iconFont.Dispose();
-        _textFont = new Font("Microsoft YaHei", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        _iconFont = new Font(SystemIconProvider.IconFontName, 10F, FontStyle.Regular, GraphicsUnit.Point);
+        _textFont = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _iconFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(10F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
         _textBox.Font = _textFont;
-        Height = this.ScaleForDpi(38);
+        Height = SidebarGdi.ScaleForDpi(38, dpi);
         Invalidate();
     }
 

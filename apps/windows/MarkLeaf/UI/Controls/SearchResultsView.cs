@@ -78,11 +78,11 @@ internal sealed class SearchResultsView : Control
         var previousFileName = _fileNameFont;
         var previousSnippet = _snippetFont;
         var previousFolderIcon = _folderIconFont;
-        _metadataFont = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        _fileNameFont = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold, GraphicsUnit.Point);
-        _snippetFont = new Font("Microsoft YaHei UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        _folderIconFont = new Font(SystemIconProvider.IconFontName, 8F, FontStyle.Regular, GraphicsUnit.Point);
-        var verticalPadding = this.ScaleForDpi(18);
+        _metadataFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(9F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _fileNameFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(10F, dpi), FontStyle.Bold, GraphicsUnit.Pixel);
+        _snippetFont = new Font("Microsoft YaHei UI", SidebarGdi.FontPixels(9F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _folderIconFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(8F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        var verticalPadding = SidebarGdi.ScaleForDpi(18, dpi);
         _rowHeight = (int)Math.Ceiling(
             _metadataFont.GetHeight(dpi) + _fileNameFont.GetHeight(dpi)
             + _snippetFont.GetHeight(dpi) + verticalPadding);

@@ -189,10 +189,10 @@ internal sealed class OutlineTreeView : Control
         var previousSecondary = _secondaryFont;
         var previousSelected = _selectedFont;
         var previousArrowFont = _arrowFont;
-        _primaryFont = new Font("Microsoft YaHei", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
-        _secondaryFont = new Font("Microsoft YaHei", 9.5F, FontStyle.Regular, GraphicsUnit.Point);
-        _selectedFont = new Font("Microsoft YaHei", 9.5F, FontStyle.Bold, GraphicsUnit.Point);
-        _arrowFont = new Font(SystemIconProvider.IconFontName, 8F, FontStyle.Regular, GraphicsUnit.Point);
+        _primaryFont = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9.5F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _secondaryFont = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9.5F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _selectedFont = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9.5F, dpi), FontStyle.Bold, GraphicsUnit.Pixel);
+        _arrowFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(8F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
         _primaryRowHeight = (int)Math.Ceiling(_primaryFont.GetHeight(dpi) * 1.75F);
         _secondaryRowHeight = (int)Math.Ceiling(_secondaryFont.GetHeight(dpi) * 1.75F);
         previousPrimary.Dispose();

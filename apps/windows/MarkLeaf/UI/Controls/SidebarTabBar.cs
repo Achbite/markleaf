@@ -130,10 +130,10 @@ internal sealed class SidebarTabBar : Control
         _font.Dispose();
         _selectedFont.Dispose();
         _iconFont.Dispose();
-        _font = new Font("Microsoft YaHei", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        _selectedFont = new Font("Microsoft YaHei", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        _iconFont = new Font(SystemIconProvider.IconFontName, 10F, FontStyle.Regular, GraphicsUnit.Point);
-        Height = this.ScaleForDpi(39);
+        _font = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9F, dpi), FontStyle.Bold, GraphicsUnit.Pixel);
+        _selectedFont = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9F, dpi), FontStyle.Bold, GraphicsUnit.Pixel);
+        _iconFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(10F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        Height = SidebarGdi.ScaleForDpi(39, dpi);
         ResetSelectionAnimation();
         Invalidate();
     }

@@ -443,11 +443,13 @@ internal sealed class DocumentTabBar : Control
         _selectedFont.Dispose();
         _markerFont.Dispose();
         _iconFont.Dispose();
-        _font = new Font("Microsoft YaHei", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        _selectedFont = new Font("Microsoft YaHei", 9F, FontStyle.Bold, GraphicsUnit.Point);
-        _markerFont = new Font("Microsoft YaHei", 8F, FontStyle.Regular, GraphicsUnit.Point);
-        _iconFont = new Font(SystemIconProvider.IconFontName, 9F, FontStyle.Regular, GraphicsUnit.Point);
-        Height = this.ScaleForDpi(35);
+        // 以像素按显式 DPI 重建：磅值字体与 DeviceDpi 在部分宿主上下文中
+        // 不随显示器缩放更新，会让菜单栏停留在启动时的缩放。
+        _font = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _selectedFont = new Font("Microsoft YaHei", SidebarGdi.FontPixels(9F, dpi), FontStyle.Bold, GraphicsUnit.Pixel);
+        _markerFont = new Font("Microsoft YaHei", SidebarGdi.FontPixels(8F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        _iconFont = new Font(SystemIconProvider.IconFontName, SidebarGdi.FontPixels(9F, dpi), FontStyle.Regular, GraphicsUnit.Pixel);
+        Height = SidebarGdi.ScaleForDpi(35, dpi);
         Invalidate();
     }
 

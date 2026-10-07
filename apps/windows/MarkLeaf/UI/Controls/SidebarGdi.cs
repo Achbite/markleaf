@@ -39,6 +39,19 @@ internal static class SidebarGdi
     public static int ScaleForDpi(this Control control, int value)
         => (int)Math.Round(value * control.DeviceDpi / 96d);
 
+    /// <summary>
+    /// 按显式 DPI 把磅值字号换算为像素。GDI+ 的磅值字体按创建时 DC 的 DPI 换算，
+    /// 部分宿主上下文（例如经 dotnet 宿主启动、进程处于 PerMonitor V1）中该值
+    /// 不随显示器缩放更新，因此自绘控件统一按传入 DPI 以像素为单位重建字体。
+    /// </summary>
+    public static float FontPixels(float points, int dpi) => points * dpi / 72f;
+
+    /// <summary>
+    /// 按显式 DPI 缩放布局值。DPI 变更处理中必须传入事件给定的目标 DPI：
+    /// Control.DeviceDpi 在 PerMonitor V1 上下文中会冻结在进程启动时的值。
+    /// </summary>
+    public static int ScaleForDpi(int value, int dpi) => (int)Math.Round(value * dpi / 96d);
+
     public static int ScaleGapForDpi(this Control control)
         => control.DeviceDpi switch
         {
