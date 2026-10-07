@@ -1340,6 +1340,12 @@ const TableCellSelectionLock = Extension.create({
     let dragCell: Element | null = null
     let dragPosition = 0
     let cellSelectionLocked = false
+    // 单格拖选的"冻结原生选区"依赖 ThemedSelection 接管绘制（WebKit 的异步
+    // 选区管线会与 ProseMirror 竞争）。Chromium 的原生选区是同步的，锁掉
+    // 反而让 Windows 等平台的单格字符选择失去唯一高亮来源，因此仅在主题化
+    // 选区扩展生效时冻结。
+    const themedSelectionActive = this.editor.extensionManager.extensions
+      .some(extension => extension.name === 'markleafThemedSelection')
 
     const elementFromTarget = (target: EventTarget | null): Element | null => {
       if (target instanceof Element) return target
@@ -1463,8 +1469,10 @@ const TableCellSelectionLock = Extension.create({
               .setMeta('addToHistory', false))
           }
           if (!upgradeFullCell(view, cell)) {
-            view.dom.classList.add('markleaf-cell-selection-locked')
-            clearDomSelection(view.dom.ownerDocument)
+            if (themedSelectionActive) {
+              view.dom.classList.add('markleaf-cell-selection-locked')
+              clearDomSelection(view.dom.ownerDocument)
+            }
           }
         }
         const endDrag = (event: MouseEvent) => {

@@ -295,6 +295,34 @@ describe('shared editing interactions', () => {
     document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
   })
 
+  it('keeps native character selection inside one cell when themed selection is off', () => {
+    // Chromium 等平台没有 ThemedSelection 接管绘制，单格拖选的高亮来源就是
+    // 原生 DOM 选区；冻结逻辑必须保持关闭，否则字符选择不可见。
+    const { editor } = setup('| first cell text | second cell |\n| --- | --- |', false)
+    const [firstCell] = Array.from(editor.view.dom.querySelectorAll('td,th'))
+    const firstCellElement = firstCell!
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => firstCellElement,
+    })
+    vi.spyOn(Object.getPrototypeOf(editor.view), 'posAtCoords')
+      .mockReturnValueOnce({ pos: 4, inside: -1 })
+      .mockReturnValue({ pos: 9, inside: -1 })
+
+    firstCellElement.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true, button: 0, buttons: 1, detail: 1,
+    }))
+    firstCellElement.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true, button: 0, buttons: 1, detail: 1,
+    }))
+
+    expect(editor.state.selection).toBeInstanceOf(TextSelection)
+    expect(editor.state.selection.from).toBe(4)
+    expect(editor.state.selection.to).toBe(9)
+    expect(editor.view.dom.classList.contains('markleaf-cell-selection-locked')).toBe(false)
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
+  })
+
   it('collects unreferenced footnotes and edits their labels and definitions', () => {
     const { editor } = setup('text\n\n[^1]: unreferenced')
     expect(getFootnoteLabels(editor)).toEqual(['1'])
