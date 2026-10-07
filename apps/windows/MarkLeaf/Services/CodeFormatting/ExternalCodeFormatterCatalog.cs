@@ -13,6 +13,7 @@ public sealed record ExternalCodeFormatterTool(
     IReadOnlyList<string> Languages,
     string ExecutableName,
     IReadOnlyList<string> StdinArguments,
+    string HomepageUrl,
     string? SelectionLineRangePrefix = null,
     IReadOnlyList<string>? ProbeArgumentsOverride = null)
 {
@@ -31,17 +32,17 @@ public static class ExternalCodeFormatterCatalog
 {
     public static IReadOnlyList<ExternalCodeFormatterTool> Tools { get; } =
     [
-        new("black", "Black", ["python", "py"], "black", ["--stdin-filename", "input.py", "-"]),
-        new("google-java-format", "google-java-format", ["java"], "google-java-format", ["-"], SelectionLineRangePrefix: "--lines="),
-        new("clang-format", "Clang-Format", ["c", "cpp", "c++", "cc", "cxx", "hpp", "objective-c", "objc", "m", "mm"], "clang-format", ["--assume-filename=input.c"]),
-        new("verible-verilog-format", "Verible", ["verilog", "sv", "systemverilog"], "verible-verilog-format", ["-"]),
-        new("latexindent", "latexindent", ["latex", "tex"], "latexindent", ["-"]),
-        new("rustfmt", "rustfmt", ["rust", "rs"], "rustfmt", ["--emit", "stdout"]),
-        new("gofmt", "gofmt", ["go"], "gofmt", [], ProbeArgumentsOverride: ["-h"]),
-        new("sqlfluff", "sqlfluff", ["sql"], "sqlfluff", ["-"]),
-        new("shfmt", "shfmt", ["shell", "sh", "bash"], "shfmt", []),
-        new("taplo", "Taplo", ["toml"], "taplo", ["format", "-"]),
-        new("xmllint", "xmllint", ["xml"], "xmllint", ["--format", "-"]),
+        new("black", "Black", ["python", "py"], "black", ["--stdin-filename", "input.py", "-"], "https://black.readthedocs.io/en/stable/getting_started.html"),
+        new("google-java-format", "google-java-format", ["java"], "google-java-format", ["-"], "https://github.com/google/google-java-format/releases/latest", SelectionLineRangePrefix: "--lines="),
+        new("clang-format", "Clang-Format", ["c", "cpp", "c++", "cc", "cxx", "hpp", "objective-c", "objc", "m", "mm"], "clang-format", ["--assume-filename=input.c"], "https://clang.llvm.org/docs/ClangFormat.html"),
+        new("verible-verilog-format", "Verible", ["verilog", "sv", "systemverilog"], "verible-verilog-format", ["-"], "https://github.com/chipsalliance/verible/releases/latest"),
+        new("latexindent", "latexindent", ["latex", "tex"], "latexindent", ["-"], "https://github.com/cmhughes/latexindent.pl/releases/latest"),
+        new("rustfmt", "rustfmt", ["rust", "rs"], "rustfmt", ["--emit", "stdout"], "https://github.com/rust-lang/rustfmt"),
+        new("gofmt", "gofmt", ["go"], "gofmt", [], "https://go.dev/dl/", ProbeArgumentsOverride: ["-h"]),
+        new("sqlfluff", "sqlfluff", ["sql"], "sqlfluff", ["-"], "https://docs.sqlfluff.com/en/stable/gettingstarted.html"),
+        new("shfmt", "shfmt", ["shell", "sh", "bash"], "shfmt", [], "https://github.com/mvdan/sh"),
+        new("taplo", "Taplo", ["toml"], "taplo", ["format", "-"], "https://taplo.tamasfe.dev/"),
+        new("xmllint", "xmllint", ["xml"], "xmllint", ["--format", "-"], "https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home"),
     ];
 
     public static string? SelectionLineRangePrefix(string toolId) =>

@@ -8,7 +8,7 @@
 
 - 同步 macOS 1.7.7：新增只读模式，可在查看菜单中切换；文件只读属性与用户开关按文档合并生效，只读时禁用保存菜单与 `Ctrl+S`，标题后缀与段落手柄同步跟随。
 - 新增稳定阅读锚点：切换标签页、切换可视化/源码模式或重新打开文档后，更可靠地恢复阅读位置。
-- 新增外部代码格式化系统：内置 11 种工具目录（black、google-java-format、clang-format、Verible、latexindent、rustfmt、gofmt、sqlfluff、shfmt、Taplo、xmllint），支持整块与选中行片段格式化；可在代码块右键菜单、格式菜单或用 `Shift+Alt+F` 触发；工具按“自定义路径 → PATH → scoop/choco/cargo/go/LLVM 常见目录”顺序探测。
+- 新增外部代码格式化系统：内置 11 种工具目录（black、google-java-format、clang-format、Verible、latexindent、rustfmt、gofmt、sqlfluff、shfmt、Taplo、xmllint），支持整块与选中行片段格式化；可在代码块右键菜单、格式菜单或用 `Shift+Alt+F` 触发；工具按“自定义路径 → PATH → scoop/choco/cargo/go/LLVM 常见目录”顺序探测；未安装或自定义路径无效的工具提供官网链接，可直接跳转获取。
 - SQL 格式化方言（sqlfluff）可在首选项中显式选择。
 - 恢复未保存文档窗口新增“打开”操作，可直接继续编辑恢复的快照而无需先另存为；原文件仍存在时沿用磁盘指纹与编码，保存流程与常规文档一致。
 - Markdown 行为设置新增“代码块拼写检查”，默认关闭。

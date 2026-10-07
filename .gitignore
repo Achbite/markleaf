@@ -103,3 +103,6 @@ release/
 
 # Local test change requests are reviewed separately from source history.
 [Tt][Cc][Rr]*.md
+
+# Ad-hoc self-contained publish output
+publish-1.7.7/

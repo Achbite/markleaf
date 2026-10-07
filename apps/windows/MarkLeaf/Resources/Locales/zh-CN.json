@@ -986,6 +986,7 @@
   "codeFormatter.pathPlaceholder": "未设置自定义路径；按 PATH 探测",
   "codeFormatter.browse": "浏览…",
   "codeFormatter.clearPath": "清除",
+  "codeFormatter.website": "官网(&W)",
   "codeFormatter.browseTitle": "选择 {0} 可执行文件",
   "codeFormatter.filterExecutable": "可执行文件",
   "codeFormatter.filterAll": "所有文件",

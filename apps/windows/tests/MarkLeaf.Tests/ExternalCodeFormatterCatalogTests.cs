@@ -71,6 +71,37 @@ public sealed class ExternalCodeFormatterCatalogTests
 
         CollectionAssert.AreEqual(new[] { "-h" }, gofmt.ProbeArguments.ToList());
     }
+
+    [TestMethod]
+    public void EveryTool_CarriesWellFormedHttpsHomepageUrl()
+    {
+        // 1.7.7：未安装/路径无效的工具要能跳转官网获取（与 macOS homepageURL 同源）。
+        foreach (var tool in ExternalCodeFormatterCatalog.Tools)
+        {
+            Assert.IsTrue(
+                Uri.TryCreate(tool.HomepageUrl, UriKind.Absolute, out var uri)
+                    && uri.Scheme == Uri.UriSchemeHttps
+                    && !string.IsNullOrWhiteSpace(uri.Host),
+                $"{tool.Id} lacks a valid https homepage URL: {tool.HomepageUrl}");
+        }
+    }
+
+    [TestMethod]
+    public void HomepageUrls_MatchTheMacCatalogContract()
+    {
+        Assert.AreEqual(
+            "https://black.readthedocs.io/en/stable/getting_started.html",
+            ExternalCodeFormatterCatalog.ToolForLanguage("python")!.HomepageUrl);
+        Assert.AreEqual(
+            "https://github.com/google/google-java-format/releases/latest",
+            ExternalCodeFormatterCatalog.ToolForLanguage("java")!.HomepageUrl);
+        Assert.AreEqual(
+            "https://go.dev/dl/",
+            ExternalCodeFormatterCatalog.ToolForLanguage("go")!.HomepageUrl);
+        Assert.AreEqual(
+            "https://taplo.tamasfe.dev/",
+            ExternalCodeFormatterCatalog.ToolForLanguage("toml")!.HomepageUrl);
+    }
 }
 
 [TestClass]

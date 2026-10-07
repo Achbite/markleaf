@@ -983,6 +983,7 @@
   "codeFormatter.pathPlaceholder": "カスタムパス未設定。PATH から検出",
   "codeFormatter.browse": "参照…",
   "codeFormatter.clearPath": "クリア",
+  "codeFormatter.website": "公式サイト(&W)",
   "codeFormatter.browseTitle": "{0} の実行ファイルを選択",
   "codeFormatter.filterExecutable": "実行ファイル",
   "codeFormatter.filterAll": "すべてのファイル",

@@ -2,6 +2,7 @@ using MarkLeaf.Services;
 using MarkLeaf.Services.CodeFormatting;
 using MarkLeaf.Services.Settings;
 using MarkLeaf.UI.Controls;
+using System.Diagnostics;
 
 namespace MarkLeaf.UI.Dialogs;
 
@@ -19,6 +20,7 @@ internal sealed class CodeFormatterSettingsDialog : Form
     private readonly ComboBox _sqlDialectCombo = new() { DropDownStyle = ComboBoxStyle.DropDownList };
     private readonly Button _browseButton = new();
     private readonly Button _clearButton = new();
+    private readonly LinkLabel _websiteLink = new();
     private readonly Label _statusLabel = new();
 
     public CodeFormatterSettingsDialog(CodeFormatterSettings settings, Action onChanged)
@@ -90,11 +92,12 @@ internal sealed class CodeFormatterSettingsDialog : Form
         var pathRow = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
+            ColumnCount = 4,
             AutoSize = true,
             Margin = new Padding(0, this.ScaleForDpi(6), 0, 0),
         };
         pathRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        pathRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         pathRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         pathRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         _pathTextBox.Dock = DockStyle.Fill;
@@ -120,6 +123,15 @@ internal sealed class CodeFormatterSettingsDialog : Form
             _onChanged();
         };
         pathRow.Controls.Add(_clearButton, 2, 0);
+
+        // 与 macOS 一致：未安装或自定义路径无效的工具提供官网链接，可直接跳转获取。
+        _websiteLink.Text = Loc.Get("codeFormatter.website");
+        _websiteLink.AutoSize = true;
+        _websiteLink.LinkBehavior = LinkBehavior.HoverUnderline;
+        _websiteLink.Padding = new Padding(this.ScaleForDpi(8), this.ScaleForDpi(4), 0, 0);
+        _websiteLink.Visible = false;
+        _websiteLink.Click += (_, _) => OpenSelectedToolWebsite();
+        pathRow.Controls.Add(_websiteLink, 3, 0);
         layout.Controls.Add(pathRow, 0, 2);
         layout.SetColumnSpan(pathRow, 2);
 
@@ -185,12 +197,34 @@ internal sealed class CodeFormatterSettingsDialog : Form
         {
             _pathTextBox.Text = string.Empty;
             _browseButton.Enabled = _clearButton.Enabled = false;
+            _websiteLink.Visible = false;
             return;
         }
 
         _browseButton.Enabled = true;
         _clearButton.Enabled = _settings.ToolPaths.ContainsKey(tool.Id);
         _pathTextBox.Text = _settings.ToolPaths.TryGetValue(tool.Id, out var path) ? path : string.Empty;
+        _websiteLink.Visible = ExternalCodeFormatterCatalog.ProbeAvailability(tool, _settings.ToolPaths)
+            != ExternalCodeFormatterAvailability.Available;
+    }
+
+    /// <summary>打开当前选中工具的官网（未安装/路径无效时链接可见），与 macOS 契约一致。</summary>
+    private void OpenSelectedToolWebsite()
+    {
+        if (SelectedTool() is not { } tool)
+        {
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = tool.HomepageUrl, UseShellExecute = true });
+        }
+        catch (Exception)
+        {
+            // 打不开系统浏览器时至少把地址显示出来，便于手动复制。
+            _statusLabel.Text = tool.HomepageUrl;
+        }
     }
 
     private void BrowseToolPath()

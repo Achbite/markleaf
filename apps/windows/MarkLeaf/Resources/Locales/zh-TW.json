@@ -983,6 +983,7 @@
   "codeFormatter.pathPlaceholder": "未設定自訂路徑；按 PATH 探測",
   "codeFormatter.browse": "瀏覽…",
   "codeFormatter.clearPath": "清除",
+  "codeFormatter.website": "官網(&W)",
   "codeFormatter.browseTitle": "選擇 {0} 執行檔",
   "codeFormatter.filterExecutable": "執行檔",
   "codeFormatter.filterAll": "所有檔案",

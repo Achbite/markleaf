@@ -983,6 +983,7 @@
   "codeFormatter.pathPlaceholder": "No custom path; discovered via PATH",
   "codeFormatter.browse": "Browse…",
   "codeFormatter.clearPath": "Clear",
+  "codeFormatter.website": "&Website",
   "codeFormatter.browseTitle": "Select the {0} executable",
   "codeFormatter.filterExecutable": "Executable",
   "codeFormatter.filterAll": "All files",
