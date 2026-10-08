@@ -192,17 +192,28 @@ internal sealed class EditorHostController : IDisposable
         try
         {
             _initializationCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(20));
-            var environment = await GetEnvironmentAsync(_webView2UserDataDirectory)
-                .WaitAsync(_initializationCancellation.Token);
-            var controllerOptions = environment.CreateCoreWebView2ControllerOptions();
-            controllerOptions.AllowHostInputProcessing = true;
-            var themeColors = ColorThemeService.GetActiveColors();
-            if (themeColors.TryGetValue("bg-primary", out var bgColor))
+            if (_webView.CoreWebView2 is null)
             {
-                controllerOptions.DefaultBackgroundColor = bgColor;
-                _loadingView.SetThemeBackground(bgColor);
+                var environment = await GetEnvironmentAsync(_webView2UserDataDirectory)
+                    .WaitAsync(_initializationCancellation.Token);
+                var controllerOptions = environment.CreateCoreWebView2ControllerOptions();
+                controllerOptions.AllowHostInputProcessing = true;
+                var themeColors = ColorThemeService.GetActiveColors();
+                if (themeColors.TryGetValue("bg-primary", out var bgColor))
+                {
+                    controllerOptions.DefaultBackgroundColor = bgColor;
+                    _loadingView.SetThemeBackground(bgColor);
+                }
+                await _webView.EnsureCoreWebView2Async(environment, controllerOptions).WaitAsync(_initializationCancellation.Token);
             }
-            await _webView.EnsureCoreWebView2Async(environment, controllerOptions).WaitAsync(_initializationCancellation.Token);
+            else
+            {
+                // 失败后重试时控件可能已带着初始化完成的 CoreWebView2（例如
+                // 首次环境创建超时但 WebView2 随后完成初始化）。对已初始化的
+                // 控件再次 EnsureCoreWebView2Async 会因 options 实例不同抛
+                // ArgumentException，让重试永远失败——直接复用现有实例。
+                _initializationCancellation.Cancel();
+            }
             ConfigureCoreWebView2();
 
             _session.TransitionTo(EditorLifecycleState.LoadingPage);

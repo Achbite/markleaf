@@ -46,6 +46,7 @@ import {
   normalizeReadingAnchor,
   resolveReadingAnchorOrdinal,
   type ReadingAnchor,
+  isCellSelection,
 } from '@markleaf/editor-core'
 import {
   rerenderMermaidElements,
@@ -228,6 +229,25 @@ declare global {
     __markleafSetWindowActive?: (active: boolean) => void
   }
 }
+
+// TODO(sync-debug): 临时诊断——CellSelection 存续期间周期上报状态，定位右键菜单关闭后高亮闪烁，验收后删除。
+setInterval(() => {
+  const selectionNow = editor.state.selection
+  if (!isCellSelection(selectionNow)) return
+  const selection = editor.state.selection
+  const isCell = typeof selection !== 'undefined' && selection.constructor.name === 'CellSelection'
+  const domSel = window.getSelection()
+  send('error', {
+    message: [
+      'celldbg',
+      `pm=${selection.constructor.name}@${selection.from}-${selection.to}`,
+      `dom=${domSel?.isCollapsed ? 'collapsed' : (domSel?.rangeCount ? 'range' : 'none')}`,
+      `lock=${editor.view.dom.classList.contains('markleaf-cell-selection-locked')}`,
+      `decos=${document.querySelectorAll('td.selectedCell, th.selectedCell').length}`,
+      `focus=${document.hasFocus()}`,
+    ].join(' '),
+  })
+}, 500)
 
 window.__markleafSetWindowActive = setNativeWindowActive
 window.addEventListener('blur', () => setNativeWindowActive(false))

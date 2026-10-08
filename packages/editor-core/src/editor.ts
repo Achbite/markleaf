@@ -1117,6 +1117,12 @@ const FindHighlight = Extension.create({
   },
 })
 
+/// 判断当前选区是否为表格单元格选区。宿主适配层无法直接 import
+/// prosemirror-tables 的 CellSelection（依赖树隔离），统一经内核导出判定。
+export function isCellSelection(selection: unknown): boolean {
+  return selection instanceof CellSelection
+}
+
 const themedSelectionKey = new PluginKey('markleaf-themed-selection')
 const selectionHighlightName = 'markleaf-selection'
 
