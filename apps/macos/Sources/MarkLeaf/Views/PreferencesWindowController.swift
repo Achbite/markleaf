@@ -49,7 +49,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
     private let newLinePopup = NSPopUpButton()
     private let recordRecentFilesCheck = NSButton(checkboxWithTitle: L10n.t("记录最近文件"), target: nil, action: nil)
     private let recordRecentFoldersCheck = NSButton(checkboxWithTitle: L10n.t("记录最近文件夹"), target: nil, action: nil)
-    private let autoUpdateCheck = NSButton(checkboxWithTitle: L10n.t("启动时自动检查更新"), target: nil, action: nil)
+    private let autoUpdateCheck = NSButton(checkboxWithTitle: L10n.t("自动检查更新"), target: nil, action: nil)
 
     // 编辑器
     private let sourceFontSizeField = NSTextField(string: "14")
@@ -255,7 +255,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
         imageDirectoryField.bezelStyle = .roundedBezel
         imageDirectoryField.widthAnchor.constraint(equalToConstant: 260).isActive = true
         checkboxButtons = [
-            multiTabCheck, autoSaveCheck, saveOnSwitchCheck, recordRecentFilesCheck, recordRecentFoldersCheck,
+            multiTabCheck, autoSaveCheck, saveOnSwitchCheck, autoUpdateCheck, recordRecentFilesCheck, recordRecentFoldersCheck,
                       blockHandleCheck, restoreZoomCheck, ctrlWheelZoomCheck, topMostCheck,
             autoHideScrollbarsCheck, followSystemCheck, codeHighlightCheck, associateMDCheck, associateTextCheck,
             useRelativePathsCheck, prefixDotSlashCheck,
@@ -482,6 +482,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
             .field(L10n.t("启动操作"), startupPopup),
             .field(L10n.t("外部文件打开方式"), externalFileOpenModePopup),
             .field(L10n.t("工作区文件打开方式"), workspaceOpenModePopup),
+            .field("", autoUpdateCheck),
             .header(L10n.t("保存选项")),
             .field("", autoSaveCheck),
             .field("", saveOnSwitchCheck),
@@ -494,7 +495,6 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
             .field("", recordRecentFilesCheck),
             .field("", recordRecentFoldersCheck),
             .field("", linkButton(L10n.t("清除历史记录…"), #selector(clearHistory))),
-            .field("", autoUpdateCheck),
         ])
     }
 
