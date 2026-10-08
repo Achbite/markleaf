@@ -53,6 +53,7 @@
 - Fixed a brief false highlight of preceding text when dragging across boundaries with CJK and Western auto-spacing enabled.
 - Fixed inaccurate heading and paragraph positioning, improving reading-position restoration.
 - Fixed typing over a selection failing to replace it after dragging to select text.
+- Fixed status-bar actions — source mode, zoom, newline and encoding — being sent to the hidden initial tab and silently doing nothing under multi-tab.
 
 ## 1.7.6 — 2026-09-12
 
