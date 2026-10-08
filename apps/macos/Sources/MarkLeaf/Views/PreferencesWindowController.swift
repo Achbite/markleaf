@@ -49,6 +49,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
     private let newLinePopup = NSPopUpButton()
     private let recordRecentFilesCheck = NSButton(checkboxWithTitle: L10n.t("记录最近文件"), target: nil, action: nil)
     private let recordRecentFoldersCheck = NSButton(checkboxWithTitle: L10n.t("记录最近文件夹"), target: nil, action: nil)
+    private let autoUpdateCheck = NSButton(checkboxWithTitle: L10n.t("启动时自动检查更新"), target: nil, action: nil)
 
     // 编辑器
     private let sourceFontSizeField = NSTextField(string: "14")
@@ -161,6 +162,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
         newLinePopup.selectItem(at: settings.newLineStyle == "crlf" ? 0 : 1)
         recordRecentFilesCheck.state = settings.recordRecentFiles ? .on : .off
         recordRecentFoldersCheck.state = settings.recordRecentFolders ? .on : .off
+        autoUpdateCheck.state = settings.autoCheckForUpdates ? .on : .off
 
         sourceFontSizeField.stringValue = "\(settings.sourceFontSize)"
         sourceFontField = FontField(fontName: settings.sourceFontFamily) { [weak self] _ in
@@ -492,6 +494,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
             .field("", recordRecentFilesCheck),
             .field("", recordRecentFoldersCheck),
             .field("", linkButton(L10n.t("清除历史记录…"), #selector(clearHistory))),
+            .field("", autoUpdateCheck),
         ])
     }
 
@@ -725,6 +728,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate, N
         settings.newLineStyle = newLinePopup.indexOfSelectedItem == 0 ? "crlf" : "lf"
         settings.recordRecentFiles = recordRecentFilesCheck.state == .on
         settings.recordRecentFolders = recordRecentFoldersCheck.state == .on
+        settings.autoCheckForUpdates = autoUpdateCheck.state == .on
 
         settings.sourceFontSize = Int(sourceFontSizeField.stringValue) ?? 14
         settings.sourceFontFamily = sourceFontField.fontName

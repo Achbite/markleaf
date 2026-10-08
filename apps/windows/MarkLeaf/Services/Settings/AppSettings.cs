@@ -196,6 +196,10 @@ public sealed class GeneralSettings
     public string UiLanguage { get; set; } = "";
 
     public bool AutoCheckForUpdates { get; set; } = true;
+
+    /// <summary>用户选择跳过的版本（VersionText）。仅作用于启动时的自动检查；
+    /// 出现更高版本或手动「检查更新」时仍会提示。</summary>
+    public string? SkippedUpdateVersion { get; set; }
 }
 
 public sealed class AppearanceSettings

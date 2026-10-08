@@ -1008,5 +1008,9 @@
   "menu.view.reopenClosedTab": "重新開啟關閉的分頁(&R)\tCtrl+Shift+T",
   "shortcut.reopenClosedTab": "重新開啟關閉的分頁",
   "status.reopenedTab": "已重新開啟關閉的分頁",
-  "status.noClosedTabs": "沒有可恢復的已關閉分頁"
+  "status.noClosedTabs": "沒有可恢復的已關閉分頁",
+  "update.installNow": "立即下載更新",
+  "update.skipVersion": "跳過此版本",
+  "update.remindLater": "稍後提醒",
+  "update.skippedStatus": "已跳過版本 {0}，更高版本發布時會再次提醒"
 }

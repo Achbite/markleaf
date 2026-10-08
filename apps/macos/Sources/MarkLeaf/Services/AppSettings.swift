@@ -90,6 +90,8 @@ struct AppSettings: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 3
         displayLanguage = try container.decodeIfPresent(String.self, forKey: .displayLanguage) ?? Self.detectSystemLanguage()
+        autoCheckForUpdates = try container.decodeIfPresent(Bool.self, forKey: .autoCheckForUpdates) ?? true
+        skippedUpdateVersion = try container.decodeIfPresent(String.self, forKey: .skippedUpdateVersion)
         markdownStyle = try container.decodeIfPresent(String.self, forKey: .markdownStyle) ?? "serif"
         let decodedTheme = try container.decodeIfPresent(String.self, forKey: .colorTheme) ?? "apple-blue"
         colorTheme = ThemeIDNormalizer.normalize(decodedTheme)
@@ -181,6 +183,10 @@ struct AppSettings: Codable {
 
     // 界面语言（i18n）：zh-Hans / zh-Hant / en
     var displayLanguage = AppSettings.detectSystemLanguage()
+
+    // 更新（对齐 Windows：启动时静默检查；被跳过的版本不再自动提醒）
+    var autoCheckForUpdates = true
+    var skippedUpdateVersion: String?
 
     /// 首次运行未设置语言时跟随系统语言。
     static func detectSystemLanguage(preferred: [String] = Locale.preferredLanguages) -> String {

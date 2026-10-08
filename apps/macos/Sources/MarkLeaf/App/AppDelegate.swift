@@ -33,7 +33,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.checkPendingRecoveries()
         }
 
-        // 自动化验证
+        // 启动时静默检查更新（对齐 Windows）：延迟到首屏就绪之后，无更新或
+        // 被跳过的版本不打扰；仅发现可用更新时弹窗。
+        if SettingsService.shared.settings.autoCheckForUpdates {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in
+                self?.checkForUpdatesOnLaunch()
+            }
+        }
+
+    // 自动化验证
         if let snapshotPath = EditorSession.argumentValue("--snapshot") {
             scheduleSnapshot(path: snapshotPath)
         }
@@ -1028,6 +1036,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// 启动时检测崩溃遗留快照（对应 C# RecoverUnsavedFiles）。
+    /// 启动时的静默更新检查（偏好「启动时自动检查更新」）。
+    private func checkForUpdatesOnLaunch() {
+        AppWindowManager.shared.checkForUpdates(automatic: true)
+    }
+
     func checkPendingRecoveries() {
         let pending = RecoveryService.pendingRecoveries()
         guard !pending.isEmpty else { return }

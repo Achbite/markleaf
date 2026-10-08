@@ -13,9 +13,13 @@ final class UpdateCheckController: NSObject, URLSessionDownloadDelegate {
     private weak var statusSession: EditorSession?
     private var statusBeforeCheck = ""
     private var checkingStatus = ""
+    /// 启动时自动检查走静默路径：无更新/失败/被跳过的版本不打扰用户，
+    /// 仅在发现可用更新时弹窗；手动「检查更新…」始终完整提示。
+    private var automatic = false
 
     /// 启动一次检查，并在结果返回后恢复发起检查的窗口状态。
-    func begin() {
+    func begin(automatic: Bool = false) {
+        self.automatic = automatic
         let session = AppWindowManager.shared.activeSession
         statusSession = session
         statusBeforeCheck = session?.statusText ?? ""
@@ -30,6 +34,7 @@ final class UpdateCheckController: NSObject, URLSessionDownloadDelegate {
             self.finishStatus()
             switch result {
             case .failure(let error):
+                if self.automatic { return }
                 self.presentFailure(error: error)
             case .success(let release):
                 switch UpdateCheckService.updateAvailability(
@@ -38,10 +43,16 @@ final class UpdateCheckController: NSObject, URLSessionDownloadDelegate {
                     currentBuild: self.currentBuild
                 ) {
                 case .updateAvailable:
+                    if self.automatic,
+                       SettingsService.shared.settings.skippedUpdateVersion == release.tagName {
+                        return
+                    }
                     self.presentUpdate(release: release)
                 case .upToDate:
+                    if self.automatic { return }
                     self.presentUpToDate()
                 case .missingBuildMetadata:
+                    if self.automatic { return }
                     self.presentMissingBuildMetadata()
                 }
             }
@@ -116,6 +127,7 @@ final class UpdateCheckController: NSObject, URLSessionDownloadDelegate {
         alert.alertStyle = .informational
         alert.addButton(withTitle: L10n.t("下载更新"))
         alert.addButton(withTitle: L10n.t("前往 GitHub Releases"))
+        alert.addButton(withTitle: L10n.t("跳过此版本"))
         alert.addButton(withTitle: L10n.t("稍后"))
         present(alert) { [weak self] response in
             guard let self else { return }
@@ -124,6 +136,13 @@ final class UpdateCheckController: NSObject, URLSessionDownloadDelegate {
                 DispatchQueue.main.async { self.downloadAndOpen(release: release) }
             case .alertSecondButtonReturn:
                 NSWorkspace.shared.open(UpdateCheckService.releasePageURL(tag: release.tagName))
+            case .alertThirdButtonReturn:
+                // 跳过仅作用于自动检查：发现更高版本时会重新提醒，
+                // 手动「检查更新…」不受影响。
+                SettingsService.shared.update { settings in
+                    settings.skippedUpdateVersion = release.tagName
+                }
+                statusSession?.statusText = L10n.f("已跳过版本 %@，更高版本发布时会再次提醒", release.tagName)
             default:
                 break
             }

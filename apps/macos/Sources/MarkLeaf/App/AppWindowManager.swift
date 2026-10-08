@@ -860,10 +860,10 @@ final class AppWindowManager {
     }
 
     /// 检查 GitHub 是否有新版本。
-    func checkForUpdates() {
+    func checkForUpdates(automatic: Bool = false) {
         let controller = UpdateCheckController()
         updateCheckController = controller
-        controller.begin()
+        controller.begin(automatic: automatic)
     }
 
     /// 恢复未保存的文件（对应 C# RecoverUnsavedFiles）。

@@ -665,8 +665,35 @@ internal sealed partial class MainForm
                 return;
             }
 
-            var prompt = Loc.Format("update.available", release.VersionText, release.BuildNumber);
-            if (ShowMessage(this, prompt, "MarkLeaf", MessageBoxButtons.YesNo, MessageBoxIcon.Information) != DialogResult.Yes)
+            // 自动检查尊重"跳过此版本"：仅当远端版本与被跳过版本一致时静默；
+            // 更高版本（或手动检查）仍会提示。跳过键取版本号文本，重新发布
+            // 的同版本构建号变化不视为新版本。
+            if (silent
+                && string.Equals(_settings.General.SkippedUpdateVersion, release.VersionText, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            var installButton = new System.Windows.Forms.TaskDialogButton(Loc.Get("update.installNow"));
+            var skipButton = new System.Windows.Forms.TaskDialogButton(Loc.Get("update.skipVersion"));
+            var laterButton = new System.Windows.Forms.TaskDialogButton(Loc.Get("update.remindLater"));
+            var page = new System.Windows.Forms.TaskDialogPage
+            {
+                Caption = "MarkLeaf",
+                Heading = Loc.Format("update.available", release.VersionText, release.BuildNumber),
+                Buttons = { installButton, skipButton, laterButton },
+                AllowCancel = false,
+            };
+            var choice = System.Windows.Forms.TaskDialog.ShowDialog(Handle, page);
+            if (choice == skipButton)
+            {
+                _settings.General.SkippedUpdateVersion = release.VersionText;
+                SaveSettings();
+                SetStatus(Loc.Format("update.skippedStatus", release.VersionText));
+                return;
+            }
+
+            if (choice != installButton)
             {
                 return;
             }

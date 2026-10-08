@@ -1011,5 +1011,9 @@
   "menu.view.reopenClosedTab": "重新打开关闭的标签页(&R)\tCtrl+Shift+T",
   "shortcut.reopenClosedTab": "重新打开关闭的标签页",
   "status.reopenedTab": "已重新打开关闭的标签页",
-  "status.noClosedTabs": "没有可恢复的已关闭标签页"
+  "status.noClosedTabs": "没有可恢复的已关闭标签页",
+  "update.installNow": "立即下载更新",
+  "update.skipVersion": "跳过此版本",
+  "update.remindLater": "稍后提醒",
+  "update.skippedStatus": "已跳过版本 {0}，更高版本发布时会再次提醒"
 }

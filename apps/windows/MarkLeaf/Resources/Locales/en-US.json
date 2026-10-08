@@ -1008,5 +1008,9 @@
   "menu.view.reopenClosedTab": "Reopen Closed Tab(&R)\tCtrl+Shift+T",
   "shortcut.reopenClosedTab": "Reopen closed tab",
   "status.reopenedTab": "Closed tab reopened",
-  "status.noClosedTabs": "No closed tabs to reopen"
+  "status.noClosedTabs": "No closed tabs to reopen",
+  "update.installNow": "Download Update",
+  "update.skipVersion": "Skip This Version",
+  "update.remindLater": "Remind Me Later",
+  "update.skippedStatus": "Skipped version {0}. You will be prompted again when a newer release is available."
 }
