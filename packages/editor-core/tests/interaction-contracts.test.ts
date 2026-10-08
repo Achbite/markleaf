@@ -295,6 +295,49 @@ describe('shared editing interactions', () => {
     document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
   })
 
+  it('collapses a locked cell selection when clicking outside the table', () => {
+    // 右键菜单关闭后，点击表格之外应与正文一致地取消选择；filterTransaction
+    // 不能把这次用户手势的折叠交易一并拦掉。
+    const { editor } = setup('| a | b |\n| - | - |\n| 1 | 2 |', true)
+    const cellDom = editor.view.dom.querySelector('td,th')!
+    Object.defineProperty(document, 'elementFromPoint', {
+      configurable: true,
+      value: () => cellDom,
+    })
+    vi.spyOn(Object.getPrototypeOf(editor.view), 'posAtCoords')
+      .mockReturnValue({ pos: 4, inside: -1 })
+
+    cellDom.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true, button: 0, buttons: 1, clientX: 10, clientY: 10,
+    }))
+    const cellPositions: number[] = []
+    editor.state.doc.descendants((node, pos) => {
+      if (node.type.name !== 'tableCell' && node.type.name !== 'tableHeader') return true
+      cellPositions.push(pos)
+      return false
+    })
+    editor.view.dispatch(editor.state.tr.setSelection(
+      CellSelection.create(editor.state.doc, cellPositions[0]!, cellPositions[2]!),
+    ))
+    cellDom.dispatchEvent(new MouseEvent('mousemove', {
+      bubbles: true, button: 0, buttons: 1, clientX: 10, clientY: 10,
+    }))
+    expect(editor.state.selection).toBeInstanceOf(CellSelection)
+    expect(editor.view.dom.classList.contains('markleaf-cell-selection-locked')).toBe(true)
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, button: 0 }))
+
+    // 模拟 PM 对"点击表格外正文"的处理：先到达锁定插件的 mousedown（无单元格
+    // → 解锁），随后 PM 派发的折叠交易应被放行。
+    editor.view.dom.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true, button: 0, buttons: 1, clientX: 10, clientY: 10,
+    }))
+    expect(editor.view.dom.classList.contains('markleaf-cell-selection-locked')).toBe(false)
+    editor.view.dispatch(editor.state.tr.setSelection(
+      TextSelection.between(editor.state.doc.resolve(1), editor.state.doc.resolve(2)),
+    ))
+    expect(editor.state.selection.empty).toBe(true)
+  })
+
   it('keeps native character selection inside one cell when themed selection is off', () => {
     // Chromium 等平台没有 ThemedSelection 接管绘制，单格拖选的高亮来源就是
     // 原生 DOM 选区；冻结逻辑必须保持关闭，否则字符选择不可见。

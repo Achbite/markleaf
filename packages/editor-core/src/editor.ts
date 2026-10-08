@@ -1431,7 +1431,13 @@ const TableCellSelectionLock = Extension.create({
           // promote a complete-cell selection without touching that pipeline.
           if (event.detail > 1 || interactiveTarget(event.target)) return
           const cell = cellFromEvent(view, event)
-          if (!cell) return
+          if (!cell) {
+            // 点击表格之外是普通的"取消选择"手势：解锁让 ProseMirror 自己的
+            // mousedown 处理折叠选区。否则 filterTransaction 会把折叠交易一并
+            // 拦下，右键菜单关闭后高亮就再也点不掉（与正文行为不一致）。
+            if (cellSelectionLocked) unlockCellDrag(view)
+            return
+          }
           const resolved = view.posAtCoords({ left: event.clientX, top: event.clientY })
           if (!resolved) return
           event.preventDefault()
