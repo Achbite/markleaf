@@ -1,6 +1,6 @@
 # MarkLeaf Changelog
 
-## 1.7.7 — 2026-09-25
+## 1.7.7 — 2026-10-8
 
 ### Added
 
@@ -9,6 +9,7 @@
 - Added stable reading anchors, so reading positions are more reliable after edits, mode changes, or reopening documents.
 - Added an optional external code formatter system that formats whole code blocks and selected code snippets, with keyboard shortcuts and context-menu entries.
 - Added an SQL dialect setting so the SQL formatting dialect can be chosen explicitly in Preferences.
+- Added automatic update checks that run silently in the background after launch.
 - Added an “Open” action to the unsaved-file recovery window, so a recovered document can be edited immediately without being saved first.
 - Added `Tab` / `Shift+Tab` indent and outdent support in code blocks.
 - Added a Code Block Spell Check option to Markdown behavior settings, disabled by default.
@@ -40,16 +41,18 @@
 - Fixed some status information disappearing or flickering after hiding and showing the sidebar.
 - Fixed sidebar search-field vertical alignment and cases where clicking it did not start a search.
 - Fixed the workspace search field being incorrectly available when no workspace was open.
-- Fixed the “Visual Settings…” button not being localized.
 - Fixed the titlebar MarkLeaf or filename occasionally starting off-center and jumping on launch.
 - Fixed Markdown and plain-text files dragged from Finder not opening.
 - Fixed opening a missing document from Open Recent with no tabs open showing no error and leaving an invalid document behind when a new tab was created.
 - Fixed unstable highlights, whole-line false highlights, or selections that could not be cleared during long-document drags, Shift+arrow selection, or autoscroll near window edges.
 - Fixed copying only the current cell when multiple table cells were selected.
 - Fixed table drag selection flickering between text and whole-cell highlights.
+- Fixed the cell-selection highlight lingering and flickering after dismissing a context menu opened over a multi-cell table selection, making it impossible to clear by clicking.
+- Fixed a large stray highlight tinted by the desktop wallpaper appearing when clicking a block formula.
 - Fixed right-clicking inside a drag selection collapsing it to the clicked position.
 - Fixed a brief false highlight of preceding text when dragging across boundaries with CJK and Western auto-spacing enabled.
 - Fixed inaccurate heading and paragraph positioning, improving reading-position restoration.
+- Fixed typing over a selection failing to replace it after dragging to select text.
 
 ## 1.7.6 — 2026-09-12
 
