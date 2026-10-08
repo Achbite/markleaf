@@ -147,6 +147,7 @@ internal sealed partial class MainForm
             ReadOnlyMode: _document is { } readOnlyDocument
                 && (readOnlyDocument.IsReadOnly || readOnlyDocument.IsUserReadOnly),
             ReadOnlyCanBeToggled: _document is not null && !_document.IsReadOnly,
+            ClosedTabsAvailable: _closedTabHistory.Count > 0,
             EditorActions: _editorCommandStatus.Actions);
         var state = CommandStateResolver.Resolve(command, context);
         if (command is AppCommand.Paste or AppCommand.PastePlainText)
@@ -170,7 +171,7 @@ internal sealed partial class MainForm
         }
     }
 
-    private void ExecuteCommand(AppCommand command)
+    private async void ExecuteCommand(AppCommand command)
     {
         switch (command)
         {
@@ -263,6 +264,9 @@ internal sealed partial class MainForm
                 break;
             case AppCommand.ToggleReadOnlyMode:
                 ToggleReadOnlyMode();
+                break;
+            case AppCommand.ReopenClosedTab:
+                await ReopenLastClosedTabAsync();
                 break;
             case AppCommand.SwitchToWorkspace:
                 ShowSidebarView(outline: false);

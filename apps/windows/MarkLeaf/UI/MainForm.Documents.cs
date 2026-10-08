@@ -392,6 +392,7 @@ internal sealed partial class MainForm
                 }
             }
 
+            RecordClosedTab(target);
             _openDocuments.RemoveAt(index);
             if (_openDocuments.Count == 0)
             {
@@ -433,6 +434,68 @@ internal sealed partial class MainForm
         {
             _documentTabCloseOperationInProgress = false;
         }
+    }
+
+    /// <summary>
+    /// 关闭标签历史（与 macOS ClosedTabHistoryPolicy 同一策略）：仅记录单个
+    /// 标签关闭，按文件路径/未命名序号去重，上限 20 条，内存保存关闭时的
+    /// 完整内容与状态——脏标签恢复后仍是脏的，不落盘。
+    /// </summary>
+    private void RecordClosedTab(MarkdownDocument document)
+    {
+        _closedTabHistory.RemoveAll(existing =>
+            document.FilePath is not null
+                ? PathEquals(existing.FilePath, document.FilePath)
+                : existing.FilePath is null && existing.Id == document.Id);
+        _closedTabHistory.Add(document);
+        while (_closedTabHistory.Count > 20)
+        {
+            _closedTabHistory.RemoveAt(0);
+        }
+    }
+
+    private bool HasClosedTabs => _closedTabHistory.Count > 0;
+
+    private async Task ReopenLastClosedTabAsync()
+    {
+        if (_closedTabHistory.Count == 0)
+        {
+            SetStatus(Loc.Get("status.noClosedTabs"));
+            return;
+        }
+
+        var record = _closedTabHistory[^1];
+        _closedTabHistory.RemoveAt(_closedTabHistory.Count - 1);
+
+        // 同路径标签仍开着时只切换过去，内容以现存标签为准（与 macOS 去重语义一致）。
+        if (record.FilePath is not null)
+        {
+            var existingIndex = _openDocuments.FindIndex(item =>
+                item.FilePath is not null && PathEquals(item.FilePath, record.FilePath));
+            if (existingIndex >= 0)
+            {
+                await SwitchDocumentTabAsync(existingIndex);
+                SetStatus(Loc.Get("status.reopenedTab"));
+                return;
+            }
+        }
+
+        // 恢复的文档取新 Id：旧 Id 对应的恢复快照在关闭时已删除，且编辑器
+        // 会话以 Id 关联，复用会与历史状态串扰。
+        var restored = _documentFileService.CreateNew(
+            record.NewLine,
+            record.Kind,
+            DocumentEncodingPolicy.FromId(record.EncodingPolicyId));
+        restored.FilePath = record.FilePath;
+        restored.Markdown = record.Markdown;
+        restored.HasBom = record.HasBom;
+        restored.IsDirty = record.IsDirty;
+        restored.IsReadOnly = record.IsReadOnly;
+        restored.ScrollTop = record.ScrollTop;
+        restored.ReadingAnchor = record.ReadingAnchor;
+        restored.Revision = Math.Max(0, record.Revision);
+        await AddAndActivateDocumentAsync(restored, forceNewTab: true);
+        SetStatus(Loc.Get("status.reopenedTab"));
     }
 
     private async void ShowDocumentTabContextMenu(int index, Point screenLocation)

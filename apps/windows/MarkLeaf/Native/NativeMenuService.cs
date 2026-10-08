@@ -1279,6 +1279,10 @@ internal sealed class NativeMenuService : IDisposable
                 : NativeMethods.MfString | NativeMethods.MfGrayed);
         AppendMainMenuCommand(
             _documentTabMenu,
+            AppCommand.ReopenClosedTab,
+            Loc.Get("menu.view.reopenClosedTab"));
+        AppendMainMenuCommand(
+            _documentTabMenu,
             AppCommand.CloseOtherDocumentTabs,
             Loc.Get("menu.view.closeOtherTabs"),
             _router.GetState(AppCommand.CloseOtherDocumentTabs).IsEnabled

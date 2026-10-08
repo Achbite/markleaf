@@ -1004,5 +1004,9 @@
   "codeFormatter.probing": "正在探測…",
   "codeFormatter.probeSucceeded": "探測通過：{0}",
   "codeFormatter.probeFailed": "探測失敗：{0}",
-  "codeFormatter.newToolsDetected": "已偵測到新的格式化器，相關語言已立即可用，無需重新啟動編輯器。"
+  "codeFormatter.newToolsDetected": "已偵測到新的格式化器，相關語言已立即可用，無需重新啟動編輯器。",
+  "menu.view.reopenClosedTab": "重新開啟關閉的分頁(&R)\\tCtrl+Shift+T",
+  "shortcut.reopenClosedTab": "重新開啟關閉的分頁",
+  "status.reopenedTab": "已重新開啟關閉的分頁",
+  "status.noClosedTabs": "沒有可恢復的已關閉分頁"
 }

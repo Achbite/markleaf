@@ -773,6 +773,13 @@ internal sealed class DocumentTabBar : Control
             if (index >= 0 && index < _documents.Count)
                 TabContextRequested?.Invoke(this, (index, PointToScreen(e.Location)));
         }
+        else if (e.Button == MouseButtons.Middle)
+        {
+            // 浏览器惯例：中键点击标签页直接关闭（与 macOS otherMouseDown 对齐）。
+            var index = _tabBounds.FindIndex(r => r.Contains(e.Location));
+            if (index >= 0 && index < _documents.Count)
+                TabCloseRequested?.Invoke(this, index);
+        }
     }
 
     protected override void OnMouseUp(MouseEventArgs e)

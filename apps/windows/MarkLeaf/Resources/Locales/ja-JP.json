@@ -1004,5 +1004,9 @@
   "codeFormatter.probing": "検出中…",
   "codeFormatter.probeSucceeded": "検出成功：{0}",
   "codeFormatter.probeFailed": "検出失敗：{0}",
-  "codeFormatter.newToolsDetected": "新しいフォーマッターを検出しました。対応言語は直ちに利用でき、エディターの再起動は不要です。"
+  "codeFormatter.newToolsDetected": "新しいフォーマッターを検出しました。対応言語は直ちに利用でき、エディターの再起動は不要です。",
+  "menu.view.reopenClosedTab": "閉じたタブを開き直す(&R)\\tCtrl+Shift+T",
+  "shortcut.reopenClosedTab": "閉じたタブを開き直す",
+  "status.reopenedTab": "閉じたタブを開き直しました",
+  "status.noClosedTabs": "開き直せる閉じたタブはありません"
 }

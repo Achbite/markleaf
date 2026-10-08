@@ -101,6 +101,7 @@ public enum AppCommand
     ToggleEditorTypewriterMode = 0x1329,
     ToggleReadOnlyMode = 0x132B,
     FormatCodeBlock = 0x132C,
+    ReopenClosedTab = 0x132D,
     SelectAll = 0x1309,
     ExitCode = 0x130A,
     EditMath = 0x130B,
@@ -190,4 +191,5 @@ public readonly record struct CommandContext(
     bool EditorFullScreen = false,
     bool ReadOnlyMode = false,
     bool ReadOnlyCanBeToggled = false,
+    bool ClosedTabsAvailable = false,
     IReadOnlyDictionary<string, CommandState>? EditorActions = null);

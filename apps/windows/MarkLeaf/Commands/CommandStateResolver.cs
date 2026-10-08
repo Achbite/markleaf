@@ -46,6 +46,7 @@ public static class CommandStateResolver
             // 或经"另存为"写出副本（与 macOS 宿主的只读命令拦截策略一致）。
             AppCommand.SaveDocument or AppCommand.SaveDocumentAs =>
                 new(context.DocumentAvailable && context.EditorReady && !context.ReadOnlyMode),
+            AppCommand.ReopenClosedTab => new(context.ClosedTabsAvailable),
             AppCommand.ToggleReadOnlyMode => new(
                 context.DocumentAvailable && context.EditorReady && context.ReadOnlyCanBeToggled,
                 context.ReadOnlyMode),

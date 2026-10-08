@@ -1004,5 +1004,9 @@
   "codeFormatter.probing": "Probing…",
   "codeFormatter.probeSucceeded": "Probe passed: {0}",
   "codeFormatter.probeFailed": "Probe failed: {0}",
-  "codeFormatter.newToolsDetected": "New formatters were detected. Their languages are available immediately; no editor restart is needed."
+  "codeFormatter.newToolsDetected": "New formatters were detected. Their languages are available immediately; no editor restart is needed.",
+  "menu.view.reopenClosedTab": "Reopen Closed Tab(&R)\\tCtrl+Shift+T",
+  "shortcut.reopenClosedTab": "Reopen closed tab",
+  "status.reopenedTab": "Closed tab reopened",
+  "status.noClosedTabs": "No closed tabs to reopen"
 }

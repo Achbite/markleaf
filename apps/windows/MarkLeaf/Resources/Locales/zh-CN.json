@@ -1007,5 +1007,9 @@
   "codeFormatter.probing": "正在探测…",
   "codeFormatter.probeSucceeded": "探测通过：{0}",
   "codeFormatter.probeFailed": "探测失败：{0}",
-  "codeFormatter.newToolsDetected": "已检测到新的格式化器，相关语言已立即可用，无需重启编辑器。"
+  "codeFormatter.newToolsDetected": "已检测到新的格式化器，相关语言已立即可用，无需重启编辑器。",
+  "menu.view.reopenClosedTab": "重新打开关闭的标签页(&R)\\tCtrl+Shift+T",
+  "shortcut.reopenClosedTab": "重新打开关闭的标签页",
+  "status.reopenedTab": "已重新打开关闭的标签页",
+  "status.noClosedTabs": "没有可恢复的已关闭标签页"
 }
