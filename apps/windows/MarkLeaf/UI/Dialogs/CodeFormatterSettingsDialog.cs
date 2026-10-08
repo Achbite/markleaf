@@ -220,7 +220,9 @@ internal sealed class CodeFormatterSettingsDialog : Form
                 ?? string.Empty;
         _websiteLink.Visible = ExternalCodeFormatterCatalog.ProbeAvailability(tool, _settings.ToolPaths)
             != ExternalCodeFormatterAvailability.Available;
-        _probeButton.Enabled = ExternalCodeFormatterCatalog.ResolveExecutable(tool, _settings.ToolPaths) is not null;
+        // 没解析到可执行文件的工具没有可探测的对象：隐藏按钮而不是置灰，
+        // 引导用户走"浏览"指定路径或官网链接获取。
+        _probeButton.Visible = ExternalCodeFormatterCatalog.ResolveExecutable(tool, _settings.ToolPaths) is not null;
     }
 
     /// <summary>仅探测当前选中的格式化器，验证版本命令可运行。</summary>
