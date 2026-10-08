@@ -53,6 +53,19 @@ jobs:
           # 必须先装好，符号链接才可用。
           pnpm --dir packages/editor-core install --frozen-lockfile
           pnpm --dir packages/editor-web install --frozen-lockfile
+      - name: Select Xcode with the macOS 27 SDK
+        # 1.7.7 的 Liquid Glass 用到 effectIsInteractive 等 macOS 27 SDK API；
+        # 镜像默认 Xcode 26.6 编不过。镜像预装 Xcode 27 public preview。
+        run: |
+          set -euo pipefail
+          xcode27="$(ls -d /Applications/Xcode*27*.app 2>/dev/null | head -n 1 || true)"
+          if [ -n "$xcode27" ]; then
+            sudo xcode-select -s "$xcode27"
+          else
+            echo "::warning::No Xcode 27 found; falling back to the default toolchain"
+          fi
+          xcodebuild -version
+          xcodebuild -showsdks | grep macosx || true
       - name: Package macOS app
         run: |
           set -euo pipefail
