@@ -1488,6 +1488,19 @@ const TableCellSelectionLock = Extension.create({
           dragCell = null
         }
 
+        // Chromium 在 user-select:none 内容里持有非折叠原生选区时（右键菜单
+        // 关闭后焦点恢复会重建一个），会持续重算并重绘该选区，与透明的
+        // ::selection 绘制交替形成闪烁。CellSelection 的 decoration 是唯一
+        // 预期高亮，锁定期间出现的任何非折叠原生选区都立即清除。
+        const clearStrayNativeSelection = () => {
+          if (!cellSelectionLocked) return
+          if (!(view.state.selection instanceof CellSelection)) return
+          const domSelection = view.dom.ownerDocument.getSelection()
+          if (!domSelection || domSelection.isCollapsed) return
+          window.setTimeout(() => clearDomSelection(view.dom.ownerDocument), 0)
+        }
+        view.dom.ownerDocument.addEventListener('selectionchange', clearStrayNativeSelection)
+
         view.dom.addEventListener('mousedown', startDrag, true)
         view.dom.ownerDocument.addEventListener('mousemove', moveDrag, true)
         view.dom.ownerDocument.addEventListener('mouseup', endDrag, true)
@@ -1502,6 +1515,7 @@ const TableCellSelectionLock = Extension.create({
             view.dom.ownerDocument.removeEventListener('mousemove', moveDrag, true)
             view.dom.ownerDocument.removeEventListener('mouseup', endDrag, true)
             view.dom.ownerDocument.removeEventListener('keydown', onKeyDown, true)
+            view.dom.ownerDocument.removeEventListener('selectionchange', clearStrayNativeSelection)
           },
         }
       },
