@@ -17,7 +17,7 @@ permissions:
 jobs:
   build:
     # 发布包固定构建 arm64（package.sh 的 ARCH），必须跑在 Apple Silicon runner 上。
-    runs-on: macos-14
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
         with:
