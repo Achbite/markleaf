@@ -1274,9 +1274,13 @@ const ThemedSelection = Extension.create({
               .setSelection(selection)
               .setMeta('addToHistory', false))
             clearDomSelection(view.dom.ownerDocument)
-            view.dispatch(view.state.tr
-              .setSelection(view.state.selection)
-              .setMeta('addToHistory', false))
+            // removeAllRanges 会把 DOM 选区落到 <body> 上；重新 dispatch 相同
+            // 选区时 ProseMirror 会跳过 DOM 同步（selection 未变化），编辑器
+            // 就停留在"PM 有选区、DOM 折叠在 body"的错位状态——WebKit 拒绝
+            // 这种输入，表现为选中文字后打字不替换、只响系统警告声。
+            // view.focus() 无条件重跑 selectionToDOM（且暂停 DOM 观察器），
+            // 把 PM 选区重新写回 DOM，恢复"输入即替换"的语义。
+            view.focus()
           }, 0)
         }
         view.dom.ownerDocument.addEventListener('mouseup', handleMouseUp, true)
