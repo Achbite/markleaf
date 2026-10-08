@@ -195,9 +195,7 @@ final class GlassSurfaceView: NSView {
         if shouldUseGlass, #available(macOS 26, *) {
             let effect = NSGlassEffectView()
             effect.style = NSGlassEffectView.Style(rawValue: style.glassStyleRawValue ?? 0) ?? .regular
-            if #available(macOS 27, *) {
-                effect.effectIsInteractive = style == .interactive
-            }
+            Self.setEffectInteractive(effect, interactive: style == .interactive)
             effect.cornerRadius = cornerRadiusOverride ?? style.cornerRadius
             effect.translatesAutoresizingMaskIntoConstraints = false
             addSubview(effect)
@@ -237,10 +235,18 @@ final class GlassSurfaceView: NSView {
         glassEffectView?.style = reducedTransparency
             ? .clear
             : (NSGlassEffectView.Style(rawValue: style.glassStyleRawValue ?? 0) ?? .regular)
-        if #available(macOS 27, *) {
-            glassEffectView?.effectIsInteractive = style == .interactive
+        if let effect = glassEffectView {
+            Self.setEffectInteractive(effect, interactive: style == .interactive)
         }
         glassEffectView?.cornerRadius = cornerRadiusOverride ?? style.cornerRadius
+    }
+
+    /// effectIsInteractive 为 macOS 27 新增属性，26 SDK 中无声明，无法直接
+    /// 引用编译；经 selector 在运行时设置，旧系统上自动退化为常规玻璃。
+    private static func setEffectInteractive(_ effect: NSView, interactive: Bool) {
+        let selector = NSSelectorFromString("setEffectIsInteractive:")
+        guard effect.responds(to: selector) else { return }
+        effect.perform(selector, with: NSNumber(value: interactive))
     }
 
     private func constrain(_ backing: NSView) {
