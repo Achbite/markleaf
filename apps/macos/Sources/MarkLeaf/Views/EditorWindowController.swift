@@ -1457,12 +1457,12 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         let session = activeSession
         let settings = SettingsService.shared.settings
         let status = settings.statusBar
-        let stats = session.documentStatistics
+        let stats = activeSession.documentStatistics
         lastDocumentIndependentStatus = statusLabel.stringValue
-        statusLabel.stringValue = session.statusText
-        let zoomStatus = L10n.f("缩放 %d%%", session.zoomPercent)
+        statusLabel.stringValue = activeSession.statusText
+        let zoomStatus = L10n.f("缩放 %d%%", activeSession.zoomPercent)
         let showCommandStatus = StatusBarDisplayPolicy.shouldShowCommandStatus(
-            commandStatus: session.statusText,
+            commandStatus: activeSession.statusText,
             zoomVisible: status.zoomVisible,
             zoomStatus: zoomStatus
         )
@@ -1482,19 +1482,19 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         blockTypeLabel.isHidden = !status.blockTypeVisible
         positionLabel.stringValue = L10n.f("行 %d 列 %d", stats.line, stats.column)
         positionLabel.isHidden = !status.positionVisible
-        encodingButton.title = session.documentEncoding
+        encodingButton.title = activeSession.documentEncoding
         encodingButton.toolTip = L10n.t("切换编码")
         encodingButton.isHidden = !status.encodingVisible
-        newLineButton.title = session.documentNewLine == DocumentNewLineStyle.mixed.rawValue
+        newLineButton.title = activeSession.documentNewLine == DocumentNewLineStyle.mixed.rawValue
             ? L10n.t("混合")
-            : session.documentNewLine
+            : activeSession.documentNewLine
         newLineButton.toolTip = L10n.t("切换换行符")
         newLineButton.isHidden = !status.newLineVisible
-        modeButton.title = L10n.t(StatusBarModePolicy.title(isSourceMode: session.isSourceMode))
+        modeButton.title = L10n.t(StatusBarModePolicy.title(isSourceMode: activeSession.isSourceMode))
         modeButton.toolTip = L10n.t("切换编辑模式")
         modeButton.isHidden = !status.modeToggleVisible
-        modeButton.isEnabled = session.editorCommandEnabled("toggleSourceMode")
-        zoomButton.title = "\(session.zoomPercent)%"
+        modeButton.isEnabled = activeSession.editorCommandEnabled("toggleSourceMode")
+        zoomButton.title = "\(activeSession.zoomPercent)%"
         zoomButton.toolTip = L10n.t("设置缩放")
         zoomButton.isHidden = !status.zoomVisible
         viewToggleButton.isHidden = !status.sidebarToggleVisible
@@ -1503,7 +1503,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     private func scheduleStatusClearIfNeeded() {
         let session = activeSession
         guard SettingsService.shared.settings.statusBar.commandDisplayMode == .temporary,
-              !session.statusText.isEmpty else { return }
+              !activeSession.statusText.isEmpty else { return }
         statusClearTimer?.invalidate()
         statusClearTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
             guard let self,
@@ -1513,11 +1513,11 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     }
 
     @objc private func toggleSidebarFromStatusBar() {
-        session.toggleSidebar()
+        activeSession.toggleSidebar()
     }
 
     @objc private func showStatistics() {
-        session.showDocumentStatistics()
+        activeSession.showDocumentStatistics()
     }
 
     @objc private func showEditorModeMenu() {
@@ -1525,14 +1525,14 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
         let visualItem = NSMenuItem(title: L10n.t("可视化"), action: #selector(selectEditorMode(_:)), keyEquivalent: "")
         visualItem.target = self
         visualItem.representedObject = "visual"
-        visualItem.state = session.isSourceMode ? .off : .on
+        visualItem.state = activeSession.isSourceMode ? .off : .on
         menu.addItem(visualItem)
 
         let sourceItem = NSMenuItem(title: L10n.t("源码"), action: #selector(selectEditorMode(_:)), keyEquivalent: "")
         sourceItem.target = self
         sourceItem.representedObject = "source"
-        sourceItem.state = session.isSourceMode ? .on : .off
-        sourceItem.isEnabled = !session.isPlainText
+        sourceItem.state = activeSession.isSourceMode ? .on : .off
+        sourceItem.isEnabled = !activeSession.isPlainText
         menu.addItem(sourceItem)
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: modeButton.bounds.height), in: modeButton)
     }
@@ -1540,13 +1540,13 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
     @objc private func selectEditorMode(_ sender: NSMenuItem) {
         guard let mode = sender.representedObject as? String else { return }
         let wantsSource = mode == "source"
-        guard wantsSource != session.isSourceMode, !(wantsSource && session.isPlainText) else { return }
-        session.toggleSourceMode()
+        guard wantsSource != activeSession.isSourceMode, !(wantsSource && activeSession.isPlainText) else { return }
+        activeSession.toggleSourceMode()
     }
 
     @objc private func showZoomMenu() {
         let menu = NSMenu(title: L10n.t("设置缩放"))
-        let current = session.zoomPercent
+        let current = activeSession.zoomPercent
         for percent in NativeMenuBuilder.zoomOptions {
             let item = NSMenuItem(title: "\(percent)%", action: #selector(selectZoom(_:)), keyEquivalent: "")
             item.target = self
@@ -1565,7 +1565,7 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
 
     @objc private func selectZoom(_ sender: NSMenuItem) {
         guard let percent = sender.representedObject as? Int else { return }
-        session.setZoom(percent)
+        activeSession.setZoom(percent)
     }
 
     @objc private func showNewLineMenu() {
@@ -1574,8 +1574,8 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             let item = NSMenuItem(title: style.rawValue, action: #selector(selectNewLineStyle(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = style.rawValue
-            item.state = session.documentNewLine == style.rawValue ? .on : .off
-            item.isEnabled = !session.isReadOnly
+            item.state = activeSession.documentNewLine == style.rawValue ? .on : .off
+            item.isEnabled = !activeSession.isReadOnly
             menu.addItem(item)
         }
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: newLineButton.bounds.height), in: newLineButton)
@@ -1591,8 +1591,8 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
             )
             item.target = self
             item.representedObject = encoding.rawValue
-            item.state = session.documentEncoding == encoding.rawValue ? .on : .off
-            item.isEnabled = !session.isReadOnly
+            item.state = activeSession.documentEncoding == encoding.rawValue ? .on : .off
+            item.isEnabled = !activeSession.isReadOnly
             menu.addItem(item)
         }
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: encodingButton.bounds.height), in: encodingButton)
@@ -1600,13 +1600,13 @@ final class EditorWindowController: NSWindowController, NSWindowDelegate {
 
     @objc private func selectEncoding(_ sender: NSMenuItem) {
         guard let rawValue = sender.representedObject as? String else { return }
-        session.requestDocumentEncodingChange(rawValue)
+        activeSession.requestDocumentEncodingChange(rawValue)
     }
 
     @objc private func selectNewLineStyle(_ sender: NSMenuItem) {
         guard let rawValue = sender.representedObject as? String,
               let style = DocumentNewLineStyle(rawValue: rawValue) else { return }
-        session.setDocumentNewLine(style)
+        activeSession.setDocumentNewLine(style)
     }
 
     /// F11 进入/退出专注模式；仅临时隐藏界面元素，不覆盖用户保存的视图偏好。

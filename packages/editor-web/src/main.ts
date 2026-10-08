@@ -1245,7 +1245,7 @@ async function handleMessage(value: unknown): Promise<void> {
   // 此时 applyStyles/setAutoHideScrollbar 等文档无关的偏好推送必须放行。
     if (message.type !== 'loadDocument' && message.type !== 'setDocumentType' && message.type !== 'applyStyles' && message.type !== 'localizeFindBar' && message.type !== 'refreshOutline' && message.type !== 'setCodeFormatterSettings'
       && documentLoaded && message.documentId !== documentId) {
-    return
+      return
   }
 
   switch (message.type) {
