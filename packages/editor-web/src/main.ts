@@ -230,6 +230,7 @@ declare global {
 }
 
 
+
 window.__markleafSetWindowActive = setNativeWindowActive
 window.addEventListener('blur', () => setNativeWindowActive(false))
 window.addEventListener('focus', () => setNativeWindowActive(true))
