@@ -244,6 +244,7 @@ final class NativeMenuBuilder {
         menu.addItem(popup(L10n.t("列表"), listsMenu(), requiresDocument: true, validationCommand: "toggleBulletList"))
         menu.addItem(commandItem(L10n.t("引用"), "toggleBlockquote"))
         menu.addItem(commandItem(L10n.t("代码块"), "toggleCodeBlock"))
+        menu.addItem(commandItem(L10n.t("格式化代码块"), "formatCodeBlock", key: "f", mask: [.shift, .option]))
         menu.addItem(popup(L10n.t("提示框"), alertsMenu(), requiresDocument: true, validationCommand: "insertAlertNote"))
         let tableItem = popup(L10n.t("表格"), tableEditingMenu())
         tableItem.representedObject = "tableEditing"

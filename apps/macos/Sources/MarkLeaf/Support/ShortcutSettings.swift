@@ -54,6 +54,7 @@ enum ShortcutCatalog {
         ShortcutEntry(command: "setHeading6", titleKey: "6级标题", defaultKey: "6", defaultMask: [.command]),
         ShortcutEntry(command: "toggleBlockquote", titleKey: "引用", defaultKey: "q", defaultMask: [.command, .control]),
         ShortcutEntry(command: "toggleCodeBlock", titleKey: "代码块", defaultKey: "k", defaultMask: [.command, .shift]),
+        ShortcutEntry(command: "formatCodeBlock", titleKey: "格式化代码块", defaultKey: "f", defaultMask: [.shift, .option]),
         ShortcutEntry(command: "toggleBulletList", titleKey: "无序列表", defaultKey: "]", defaultMask: [.command, .shift]),
         ShortcutEntry(command: "toggleOrderedList", titleKey: "有序列表", defaultKey: "[", defaultMask: [.command, .shift]),
         ShortcutEntry(command: "toggleTaskList", titleKey: "任务列表", defaultKey: "t", defaultMask: [.command, .option]),
