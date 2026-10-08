@@ -116,8 +116,8 @@ final class RecoveryWindowController: NSWindowController, NSTableViewDataSource,
         cancelButton.bezelStyle = .rounded
 
         let buttons = NSStackView(views: [
-            saveOriginalButton,
             openButton,
+            saveOriginalButton,
             saveAsButton,
             discardSelectedButton,
             discardAllButton,
