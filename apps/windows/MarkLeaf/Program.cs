@@ -48,6 +48,25 @@ internal static class Program
         var paths = ApplicationPaths.Create(options.SettingsRoot);
         Directory.CreateDirectory(paths.DataDirectory);
 
+        // 主实例互斥：两个主实例会争抢同一 WebView2 用户数据目录，导致环境
+        // 创建失败/初始化竞态。孤立文件窗口（IsolatedFileWindow）按设计可
+        // 多开，不参与锁。已存在主实例时把文件转发过去后退出。
+        Mutex? primaryInstanceMutex = null;
+        if (!options.IsolatedFileWindow)
+        {
+            primaryInstanceMutex = new Mutex(initiallyOwned: true, @"Global\MarkLeaf.PrimaryInstance", out var createdNew);
+            if (!createdNew)
+            {
+                if (!string.IsNullOrWhiteSpace(options.InitialDocumentPath)
+                    && FileOpenRouter.TryForwardAsync(options.InitialDocumentPath).GetAwaiter().GetResult())
+                {
+                    return;
+                }
+
+                return;
+            }
+        }
+
         if (!string.IsNullOrWhiteSpace(options.InitialDocumentPath))
         {
             var currentProcessId = Environment.ProcessId;
@@ -68,6 +87,7 @@ internal static class Program
         }
 
         using var logger = new FileLogger(paths.LogDirectory);
+        using var _mutexScope = primaryInstanceMutex;
         var settingsService = new JsonSettingsService(paths.SettingsFile, logger);
 
         try
