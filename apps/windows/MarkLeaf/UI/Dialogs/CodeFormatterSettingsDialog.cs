@@ -199,6 +199,8 @@ internal sealed class CodeFormatterSettingsDialog : Form
 
     private void OnSelectedToolChanged()
     {
+        // 探测结果是针对上一个选中工具的一次性反馈，切换选择时还原为默认提示。
+        _statusLabel.Text = Loc.Get("codeFormatter.hint");
         if (SelectedTool() is not { } tool)
         {
             _pathTextBox.Text = string.Empty;
