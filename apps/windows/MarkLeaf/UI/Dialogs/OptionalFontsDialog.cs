@@ -74,6 +74,7 @@ internal sealed class OptionalFontsDialog : Form
         _grid.Columns["theme"]!.FillWeight = 33F;
         _grid.Columns["font"]!.FillWeight = 100F;
         _grid.Columns["installed"]!.FillWeight = 167F;
+        _grid.EnableDoubleBuffering();
         ReloadRows();
 
         _status.Dock = DockStyle.Fill;

@@ -144,6 +144,7 @@ internal sealed class ShortcutDialog : Form
 
         grid.Columns.Add(shortcutColumn);
         grid.Columns.Add(descriptionColumn);
+        grid.EnableDoubleBuffering();
         return grid;
     }
 

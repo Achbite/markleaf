@@ -40,6 +40,16 @@ internal static class SidebarGdi
         => (int)Math.Round(value * control.DeviceDpi / 96d);
 
     /// <summary>
+    /// DataGridView 默认关闭双缓冲：滚动时可见行被直接增量重画，高 DPI 下
+    /// （如 200%）每帧像素量翻四倍，表现为逐行刷出的卡顿。DoubleBuffered
+    /// 是 protected 成员，统一经反射打开。
+    /// </summary>
+    public static void EnableDoubleBuffering(this DataGridView grid)
+        => typeof(DataGridView)
+            .GetProperty("DoubleBuffered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            ?.SetValue(grid, true);
+
+    /// <summary>
     /// 按显式 DPI 把磅值字号换算为像素。GDI+ 的磅值字体按创建时 DC 的 DPI 换算，
     /// 部分宿主上下文（例如经 dotnet 宿主启动、进程处于 PerMonitor V1）中该值
     /// 不随显示器缩放更新，因此自绘控件统一按传入 DPI 以像素为单位重建字体。
