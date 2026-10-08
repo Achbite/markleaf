@@ -142,7 +142,7 @@ final class UpdateCheckController: NSObject, URLSessionDownloadDelegate {
                 SettingsService.shared.update { settings in
                     settings.skippedUpdateVersion = release.tagName
                 }
-                statusSession?.statusText = L10n.f("已跳过版本 %@，更高版本发布时会再次提醒", release.tagName)
+                statusSession?.statusText = L10n.f("已跳过版本 %@", release.tagName)
             default:
                 break
             }

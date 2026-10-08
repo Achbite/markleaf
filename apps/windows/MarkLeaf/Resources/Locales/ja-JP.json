@@ -1012,5 +1012,5 @@
   "update.installNow": "更新をダウンロード",
   "update.skipVersion": "このバージョンをスキップ",
   "update.remindLater": "後で通知",
-  "update.skippedStatus": "バージョン {0} をスキップしました。新しいバージョンがリリースされると再度通知します"
+  "update.skippedStatus": "バージョン {0} をスキップしました"
 }

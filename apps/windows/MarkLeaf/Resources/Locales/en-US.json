@@ -1012,5 +1012,5 @@
   "update.installNow": "Download Update",
   "update.skipVersion": "Skip This Version",
   "update.remindLater": "Remind Me Later",
-  "update.skippedStatus": "Skipped version {0}. You will be prompted again when a newer release is available."
+  "update.skippedStatus": "Skipped version {0}"
 }

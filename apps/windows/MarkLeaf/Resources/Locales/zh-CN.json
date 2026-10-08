@@ -1015,5 +1015,5 @@
   "update.installNow": "立即下载更新",
   "update.skipVersion": "跳过此版本",
   "update.remindLater": "稍后提醒",
-  "update.skippedStatus": "已跳过版本 {0}，更高版本发布时会再次提醒"
+  "update.skippedStatus": "已跳过版本 {0}"
 }
