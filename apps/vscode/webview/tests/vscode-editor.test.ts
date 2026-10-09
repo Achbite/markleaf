@@ -111,6 +111,18 @@ describe('shared editor in a VS Code text host', () => {
     expect(setEditable).not.toHaveBeenCalled()
     expect(create).toHaveBeenCalledWith(expect.any(HTMLElement), expect.any(String), false, expect.objectContaining({ externalHistory: true }))
     expect(create.mock.calls[0]?.[3]).toMatchObject({ codeHighlightVisible: true })
+    await Promise.resolve()
+    const rerender = vi.spyOn(editorModule, 'rerenderMermaidElements')
+    document.body.classList.add('markleaf-auto-hide-scrollbar')
+    document.body.classList.add('markleaf-reduced-motion')
+    await Promise.resolve()
+    expect(rerender).not.toHaveBeenCalled()
+    document.body.classList.add('vscode-dark')
+    await Promise.resolve()
+    expect(rerender).toHaveBeenCalledOnce()
+    document.body.dataset.vscodeThemeId = 'another-dark-theme'
+    await Promise.resolve()
+    expect(rerender).toHaveBeenCalledTimes(2)
     // jsdom has no text layout; this test checks editing and transport, not
     // browser scroll geometry after toolbar commands restore focus.
     instance.view.setProps({ handleScrollToSelection: () => true })

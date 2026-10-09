@@ -529,6 +529,7 @@ window.addEventListener('scroll', () => {
     vscode.setState({ mode, scrollTop: window.scrollY })
   })
 }, { passive: true })
+let appliedTheme: string | undefined
 function updateTheme(): void {
   const dark = settings.colorTheme === 'vscode' ? document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
     : ['apple-dark', 'dark', 'deep-sea', 'espresso', 'high-contrast-dark', 'morandi-dark', 'pure-black'].includes(settings.colorTheme)
@@ -537,7 +538,12 @@ function updateTheme(): void {
     ? document.body.classList.contains('vscode-high-contrast') || document.body.classList.contains('vscode-high-contrast-light')
     : settings.colorTheme.startsWith('high-contrast-')
   document.body.toggleAttribute('data-markleaf-soft-dark', dark && !highContrast)
-  rerenderMermaidElements(mount)
+  const theme = JSON.stringify([settings.colorTheme, document.body.dataset.vscodeThemeId, dark, highContrast])
+  const changed = appliedTheme !== undefined && appliedTheme !== theme
+  appliedTheme = theme
+  // Scrollbar and motion preferences also change body.class. Only actual
+  // theme changes invalidate diagrams, including light-to-light themes.
+  if (changed) rerenderMermaidElements(mount)
 }
 const themeObserver = new MutationObserver(updateTheme)
 themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-vscode-theme-id'] })

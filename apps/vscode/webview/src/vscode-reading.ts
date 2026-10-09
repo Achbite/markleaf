@@ -11,6 +11,9 @@ import { styles, resolveTypography, stylesGlobPrefix } from './vscode-styles'
 export function createReadingView(editor: Editor, mount: HTMLElement, count: HTMLElement) {
   let settings = { ...defaultSettings }
   let lastFocus: boolean | undefined
+  let applied = false
+  let appliedCss = ''
+  let appliedLanguage = ''
   let scrollFrame = 0
   const events = new AbortController()
   const behavior = createReadingBehavior(() => editor, headerBottom)
@@ -78,7 +81,13 @@ export function createReadingView(editor: Editor, mount: HTMLElement, count: HTM
   return {
     update, rebuildOutline,
     apply(next: MarkLeafSettings, customCss = '', language = 'zh-Hans'): void {
+      const diagramStyleChanged = applied && (settings.fontFamily !== next.fontFamily
+        || settings.typography !== next.typography || settings.colorTheme !== next.colorTheme
+        || appliedCss !== customCss || appliedLanguage !== language)
       settings = next
+      applied = true
+      appliedCss = customCss
+      appliedLanguage = language
       const root = document.documentElement
       root.style.setProperty('--ml-font-size', `${Math.max(10, Math.min(32, next.fontSize)) * Math.max(50, Math.min(200, next.zoom)) / 100}px`)
       root.style.setProperty('--ml-max-width', `${Math.max(320, Math.min(1600, next.maxWidth))}px`)
@@ -110,7 +119,8 @@ export function createReadingView(editor: Editor, mount: HTMLElement, count: HTM
       setBlockTypeLabels(strings)
       document.querySelector('.ml-block-handle')?.setAttribute('aria-label', strings.blockHandleAria)
       update()
-      rerenderMermaidElements(mount)
+      // Initial node views render after this synchronous settings pass.
+      if (diagramStyleChanged) rerenderMermaidElements(mount)
     },
     dispose(): void {
       events.abort(); cancelAnimationFrame(scrollFrame); behavior.dispose()
