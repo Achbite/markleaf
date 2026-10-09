@@ -87,6 +87,10 @@ setCodeBlockControlHandlers({
   },
 })
 
+function canEditDocument(): boolean {
+  return writable && mode === 'edit' && !sync.conflict && !renderingFailed
+}
+
 const sync = new TextDocumentSync({
   post,
   render(document) {
@@ -99,8 +103,9 @@ const sync = new TextDocumentSync({
         collapseSourceEditor(editor)
         updateEditorMarkdown(editor, document.markdown)
       } else {
-        editor = createEditor(mount, document.markdown, true, {
+        editor = createEditor(mount, document.markdown, !canEditDocument(), {
           externalHistory: true,
+          codeHighlightVisible: settings.showCodeHighlight,
           handlePaste(event) {
             if (!editor?.isEditable) return false
             const files = Array.from(event.clipboardData?.files ?? []).filter(file => file.type.startsWith('image/'))
@@ -149,7 +154,7 @@ const sync = new TextDocumentSync({
 
 function updateStatus(): void {
     if (!editor) return
-    const editable = writable && mode === 'edit' && !sync.conflict && !renderingFailed
+    const editable = canEditDocument()
     if (editor.isEditable !== editable) {
       if (!editable) collapseSourceEditor(editor)
       editor.setEditable(editable, false)

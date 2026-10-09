@@ -93,8 +93,12 @@ describe('shared editor in a VS Code text host', () => {
     }, getState: () => undefined, setState: () => {} }))
     vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
     let visual: ReturnType<typeof createEditor> | undefined
+    let initiallyEditable: boolean | undefined
+    let setEditable: ReturnType<typeof vi.spyOn> | undefined
     const create = vi.spyOn(editorModule, 'createEditor').mockImplementation((...args) => {
       visual = createEditorOriginal(...args)
+      initiallyEditable = visual.isEditable
+      setEditable = vi.spyOn(visual, 'setEditable')
       return visual
     })
     await import('../src/vscode')
@@ -102,7 +106,11 @@ describe('shared editor in a VS Code text host', () => {
     receive({ type: 'document', markdown: '# Title\n\nHello\n', version: 1, writable: true })
     expect(messages).toEqual([{ type: 'ready', mac: /Mac/i.test(navigator.platform) }, { type: 'focus', target: null }])
     const instance = visual!
-    expect(create).toHaveBeenCalledWith(expect.any(HTMLElement), expect.any(String), true, expect.objectContaining({ externalHistory: true }))
+    expect(initiallyEditable).toBe(true)
+    expect(instance.isEditable).toBe(true)
+    expect(setEditable).not.toHaveBeenCalled()
+    expect(create).toHaveBeenCalledWith(expect.any(HTMLElement), expect.any(String), false, expect.objectContaining({ externalHistory: true }))
+    expect(create.mock.calls[0]?.[3]).toMatchObject({ codeHighlightVisible: true })
     // jsdom has no text layout; this test checks editing and transport, not
     // browser scroll geometry after toolbar commands restore focus.
     instance.view.setProps({ handleScrollToSelection: () => true })
