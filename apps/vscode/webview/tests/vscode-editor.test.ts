@@ -262,7 +262,7 @@ describe('shared editor in a VS Code text host', () => {
     mode.click(); mode.click()
     expect(instance.state.doc).toBe(beforeSettings)
     expect(messages.filter(message => message.type === 'edit')).toHaveLength(editsBeforeSettings)
-    expect(document.querySelector('#outline button')?.textContent).toBe('Heading')
+    expect(document.querySelector('#outline [role="treeitem"]')?.textContent).toBe('Heading')
 
     // Windows treats the clipboard's plain-text format as Markdown in visual mode.
     receive({ type: 'document', markdown: 'target', version: 11, writable: true })

@@ -6,6 +6,8 @@ Read and visually edit Markdown in VS Code using MarkLeaf's Tiptap/ProseMirror c
 
 Version **0.2.8** provides 36 settings and 67 configurable formatting actions, including a format painter, tables, footnotes, math and diagrams, image resources, find and replace, an outline, and reading preferences. PDF, HTML, PNG/JPG images, preview, and printing are now available.
 
+Open the outline from the toolbar (视图 → 大纲). Version 0.3.0 follows the Windows desktop hierarchy and adds heading search, expand/collapse, locate current heading, keyboard navigation, and visibility tracking for expanded rows. The sidebar fills the available height and scrolls independently; hover over a truncated heading to read its full text. The existing markleaf.showOutline preference is preserved.
+
 Toolbar menus close on an outside click, Escape, switching menus, or leaving the extension's focus. Math and Mermaid source panels have opaque backgrounds that follow light/dark themes. They use the same kernel positioning as the native products: prefer the space below the content and adjust within the viewport when space is limited. The math symbol panel adapts its layout to the available space.
 
 Project and extension READMEs are available in four languages. UI translation coverage is described under “Typography and preferences” below.

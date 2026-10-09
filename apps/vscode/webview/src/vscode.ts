@@ -102,6 +102,7 @@ const sync = new TextDocumentSync({
         interactions?.cancel()
         collapseSourceEditor(editor)
         updateEditorMarkdown(editor, document.markdown)
+        reading?.rebuildOutline()
       } else {
         editor = createEditor(mount, document.markdown, !canEditDocument(), {
           externalHistory: true,
@@ -137,7 +138,6 @@ const sync = new TextDocumentSync({
         reading = createReadingView(editor, mount, count)
         reading.apply(settings, customCss, language)
       }
-      reading?.rebuildOutline()
       findBar?.refresh()
       mount.setAttribute('aria-busy', 'false')
       renderingFailed = false
